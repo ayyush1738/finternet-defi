@@ -1,10 +1,8 @@
-const healthcheck = (req, res) => {
-    res.status(200)
-    .json({
-        message: 'OK',
-        string: 'Finternet is future',
-        timestamp: new Date().toISOString(),
-    })
-}
+import { Router } from 'express';
+import { healthcheck } from '../controllers/healthcheck.controllers.js';
 
-export default healthcheck;
+const router = Router();
+
+router.get('/', healthcheck);
+
+export default router;
