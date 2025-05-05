@@ -1,10 +1,9 @@
-const { Pool } = require("pg");
+import { Pool } from 'pg';
 import 'dotenv/config';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 });
-  
 
 pool.connect((err, client, release) => {
   if (err) {
@@ -16,8 +15,11 @@ pool.connect((err, client, release) => {
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE,
       password TEXT NOT NULL,
-      role TEXT CHECK(role IN ('user', 'admin')) NOT NULL DEFAULT 'user',
+      wallet_address TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      role TEXT CHECK(role IN ('SME', 'investor', 'buyer')) NOT NULL DEFAULT 'SME'
     );
   `;
 
@@ -31,4 +33,4 @@ pool.connect((err, client, release) => {
   });
 });
 
-module.exports = pool;
+export default pool;
