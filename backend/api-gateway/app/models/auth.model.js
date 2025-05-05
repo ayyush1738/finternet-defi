@@ -1,5 +1,5 @@
-const bcrypt = require("bcryptjs");
-const db = require("../../../db/database.js");
+import bcrypt from 'bcrypt';
+import db from '../config/db.js';
 
 exports.registerUser = async (username, password, role, callback) => {
     const hashedPassword = await bcrypt.hash(password, 12);

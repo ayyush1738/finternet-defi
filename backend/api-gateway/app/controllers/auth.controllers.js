@@ -1,6 +1,7 @@
-const jwt = require("jsonwebtoken");
-const { registerUser, loginUser } = require("../models/auth.model.js");
-const { JWT_SECRET } = require("../config/config.js");
+import jwt from 'jsonwebtoken';
+import 'dotenv/config';
+import { registerUser, loginUser } from '../models/auth.model.js';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.register = (req, res) => {
     const { username, password, role } = req.body;
@@ -35,8 +36,6 @@ exports.login = (req, res) => {
         res.json({ message: "Login successful", user });
     });
 };
-
-
 
 
 exports.logout = (req, res) => {

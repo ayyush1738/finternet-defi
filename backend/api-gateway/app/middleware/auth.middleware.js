@@ -1,5 +1,7 @@
-const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../config/config.js");
+import jwt from 'jsonwebtoken';
+import 'dotenv/config';
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports = (req, res, next) => {
     console.log("🔍 Incoming Auth Request Headers:", req.headers);
