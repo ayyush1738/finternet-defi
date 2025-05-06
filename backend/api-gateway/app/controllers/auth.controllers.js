@@ -4,16 +4,16 @@ import { loginUser, registerUser } from '../models/auth.model.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Register
 export const register = (req, res) => {
-    const { username, password, role } = req.body;
-    registerUser(username, password, role, (err) => {
+
+    const { username, email, password, role, wallet_address } = req.body;
+
+    registerUser(username, email, password, role, wallet_address, (err) => {
         if (err) return res.status(400).send("Error: " + (err.message || err));
         res.send("Registration successful.");
     });
 };
 
-// Login
 export const login = (req, res) => {
     const { username, password } = req.body;
 
@@ -26,13 +26,12 @@ export const login = (req, res) => {
             { expiresIn: "6h" }
         );
 
-        res.setHeader("Access-Control-Expose-Headers", "Set-Cookie");
         res.cookie("token", token, {
-            httpOnly: false,  // Set to true in production
-            secure: false,    // Set to true in production (HTTPS)
-            sameSite: "Lax",
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "Strict",
             path: "/",
-            maxAge: 6 * 60 * 60 * 1000, // 6 hours
+            maxAge: 6 * 60 * 60 * 1000, 
         });
 
         console.log("Token Set Successfully:", token);
@@ -40,13 +39,11 @@ export const login = (req, res) => {
     });
 };
 
-// Logout
 export const logout = (req, res) => {
     res.clearCookie("token");
     res.json({ message: "Logout successful" });
 };
 
-// Check Role
 export const checkRole = (req, res) => {
     const token = req.cookies.token;
 
