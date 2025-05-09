@@ -9,7 +9,8 @@ const router = Router();
 
 const uploadMiddleware = multer(); 
 
-router.post('/upload', uploadMiddleware.single('file'), upload);
+router.get('/dashboard', authMiddleware, );
+router.post('/upload', authMiddleware, uploadMiddleware.single('file'), upload);
 
 
 export default router;

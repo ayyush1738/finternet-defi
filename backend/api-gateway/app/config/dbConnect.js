@@ -1,3 +1,4 @@
+// dbConnect.js
 import { Pool } from 'pg';
 import 'dotenv/config';
 
@@ -14,11 +15,10 @@ pool.connect((err, client, release) => {
     const createTables = `
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
+            username TEXT UNIQUE,
             email TEXT UNIQUE,
-            password TEXT NOT NULL,
-            wallet_address TEXT,
-            role TEXT CHECK(role IN ('SME', 'investor', 'buyer')) NOT NULL DEFAULT 'SME'
+            wallet_address TEXT UNIQUE NOT NULL,
+            role TEXT CHECK(role IN ('investor', 'sme', 'buyer')) NOT NULL DEFAULT 'investor'
         );
     `;
 

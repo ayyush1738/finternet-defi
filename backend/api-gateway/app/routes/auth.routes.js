@@ -1,11 +1,11 @@
+// auth.routes.js
 import { Router } from 'express';
-import { register, login, logout, checkRole } from "../controllers/auth.controllers.js";
+import { getNonce, login, register } from "../controllers/auth.controller.js";
 
 const router = Router();
 
-router.post("/register", register);
+router.get("/nonce", getNonce);
 router.post("/login", login);
-router.post("/logout", logout);
-router.get("/checkRole", checkRole);
+router.post("/register", register);
 
 export default router;
