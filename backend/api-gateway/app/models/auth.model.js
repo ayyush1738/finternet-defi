@@ -15,7 +15,7 @@ export const findUserByWallet = async (wallet_address, callback) => {
 // Optional: allow profile update (username/email/role)
 export const updateUserProfile = async (wallet_address, username, email, role, callback) => {
     try {
-        const allowedRoles = ['investor', 'sme', 'buyer'];
+        const allowedRoles = ['investor', 'enterprise', 'buyer'];
         if (!allowedRoles.includes(role)) return callback("Invalid role", null);
 
         await db.query(
