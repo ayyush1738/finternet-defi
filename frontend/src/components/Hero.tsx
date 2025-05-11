@@ -1,6 +1,7 @@
 import { TextGenerateEffect } from './ui/TextGenerateEffect';
 import MagicButton from './MagicButton';
 import { FaLocationArrow } from 'react-icons/fa6';
+import Link from 'next/link';
 
 
 export default function Hero() {
@@ -19,9 +20,9 @@ export default function Hero() {
                         words="A decentralized marketplace for tokenized invoices, enabling SMEs to access instant liquidity and investors to earn fixed returns. Verified by AI, secured on Solana, and settled via Finternet’s unified ledger — bringing trustless, global invoice financing to the on-chain economy. No banks. No delays. Just capital, unlocked."
                     />
                     <div className="w-56 mx-auto mt-6">
-                        <a href="#about">
+                        <a href="/enterprise">
                             <MagicButton
-                                title="Show My Work"
+                                title="For Enterprises"
                                 icon={<FaLocationArrow />}
                                 position="right"
                             />
