@@ -1,7 +1,6 @@
 import { TextGenerateEffect } from './ui/TextGenerateEffect';
 import MagicButton from './MagicButton';
 import { FaLocationArrow } from 'react-icons/fa6';
-import Link from 'next/link';
 
 
 export default function Hero() {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
+import { useRouter } from 'next/navigation'; // ✅ App Router
 
 type SignedMessage = {
   signature: Uint8Array;
@@ -18,6 +19,7 @@ export default function WalletLogin() {
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter(); // ✅ Next Router
 
   const getProvider = (): any | null => {
     if (typeof window !== 'undefined' && 'solana' in window) {
@@ -69,13 +71,10 @@ export default function WalletLogin() {
         setStatus('Wallet disconnected');
         localStorage.removeItem('jwt');
         localStorage.setItem('phantom-disconnected', 'true');
-        console.log('Wallet disconnected');
       } catch (err) {
         console.error(err);
         setStatus('Wallet disconnect failed');
       }
-    } else {
-      setStatus('Phantom wallet not available');
     }
   };
 
@@ -91,15 +90,10 @@ export default function WalletLogin() {
       const { nonce } = nonceData;
 
       const provider = getProvider();
-      if (!provider) {
-        setStatus('Phantom wallet not available');
-        return;
-      }
+      if (!provider) return;
 
       const encodedMsg = new TextEncoder().encode(nonce);
       const signedMessage: SignedMessage = await provider.signMessage(encodedMsg, 'utf8');
-
-      console.log('Signed message:', signedMessage);
 
       const loginRes = await fetch('http://localhost:8000/api/v1/auth/login', {
         method: 'POST',
@@ -117,7 +111,9 @@ export default function WalletLogin() {
         setStatus('Login successful');
         setToken(data.token);
         localStorage.setItem('jwt', data.token);
-        console.log('JWT saved:', data.token);
+
+        // ✅ Redirect to dynamic profile page
+        router.push(`/profile/${walletAddress}`);
       } else {
         setStatus(`Login failed: ${data.message}`);
       }
@@ -144,13 +140,11 @@ export default function WalletLogin() {
           const lamports = await connection.getBalance(pubKey);
           const sol = lamports / 1e9;
           setBalance(sol);
-          console.log(`Balance: ${sol} SOL`);
         })
         .catch(() => console.log('No trusted connection'));
     }
   }, []);
 
-  // Handle outside click to close dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -169,8 +163,7 @@ export default function WalletLogin() {
             <button
               onClick={connectWallet}
               type="button"
-              className="w-full h-10 text-white text-sm font-medium rounded-md flex items-center justify-center gap-2 hover:cursor-pointer
-              "
+              className="w-full h-10 text-white text-sm font-medium rounded-md flex items-center justify-center gap-2"
             >
               Connect Wallet
             </button>
@@ -178,7 +171,6 @@ export default function WalletLogin() {
         </div>
       ) : (
         <div className="flex items-center gap-4 relative" ref={dropdownRef}>
-          {/* Balance */}
           <div className="flex items-center bg-gradient-to-br from-purple-600 to-green-400 rounded-2xl px-4 py-2">
             <svg
               className="w-4 h-4 text-white mr-2"
@@ -187,11 +179,10 @@ export default function WalletLogin() {
             >
               <path d="m23.876 18.032-3.962 4.14a.92.92 0 0 1-.673.284H.46a.469.469 0 0 1-.252-.074.437.437 0 0 1-.084-.68l3.965-4.14a.92.92 0 0 1 .67-.284H23.54a.47.47 0 0 1 .252.073.438.438 0 0 1 .084.68Zm-3.962-8.336a.92.92 0 0 0-.673-.285H.46a.469.469 0 0 0-.252.074.438.438 0 0 0-.084.68l3.965 4.14a.92.92 0 0 0 .67.284H23.54a.453.453 0 0 0 .422-.27.438.438 0 0 0-.086-.483l-3.962-4.14ZM.46 6.723h18.781a.942.942 0 0 0 .673-.285l3.962-4.14a.444.444 0 0 0 .086-.484.453.453 0 0 0-.17-.196.469.469 0 0 0-.252-.073H4.76a.94.94 0 0 0-.671.285L.125 5.97a.444.444 0 0 0-.086.483.469.469 0 0 0 .421.27Z" />
             </svg>
-            <span className="font-bold text-white text-sm">{balance !== null ? balance.toFixed(2) : 'Loading...'}</span>
+            <span className="font-bold text-white text-sm">{balance?.toFixed(2)}</span>
             <span className="ml-2 text-white font-bold">SOL</span>
           </div>
           <div className="w-px h-10 bg-gray-400 mx-4"></div>
-          {/* Wallet Dropdown trigger */}
           <div
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="flex items-center cursor-pointer h-10 hover:bg-gray-800 rounded-md px-3 gap-2 min-w-[140px]"
@@ -200,9 +191,7 @@ export default function WalletLogin() {
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 10a4 4 0 100-8 4 4 0 000 8zM2 18a8 8 0 1116 0H2z" />
               </svg>
-            </div>
-
-            <span className="text-sm font-medium text-white truncate max-w-[80px]">
+            </div>            <span className="text-sm font-medium text-white truncate max-w-[80px]">
               {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "Connect"}
             </span>
 
@@ -219,29 +208,21 @@ export default function WalletLogin() {
             </svg>
           </div>
 
-          {/* Dropdown Menu */}
           {isDropdownOpen && (
             <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mt-60">
               <div className="px-4 py-2 font-semibold border-b border-gray-700">
-                {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Not connected'}
-                <div className="text-sm text-gray-400">{balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}</div>
+                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                <div className="text-sm text-gray-400">
+                  {balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}
+                </div>
               </div>
-              <button
-                onClick={connectWallet}
-                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm"
-              >
+              <button onClick={connectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm">
                 Connect Wallet
               </button>
-              <button
-                onClick={login}
-                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm"
-              >
-                Profile 
+              <button onClick={login} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm">
+                Profile
               </button>
-              <button
-                onClick={disconnectWallet}
-                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500"
-              >
+              <button onClick={disconnectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500">
                 Logout
               </button>
             </div>
