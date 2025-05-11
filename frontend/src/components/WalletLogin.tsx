@@ -165,7 +165,7 @@ export default function WalletLogin() {
     <div className='w-full'>
       {!walletAddress ? (
         <div className="flex items-center gap-4">
-          <div className="w-40 rounded-2xl bg-gradient-to-br from-purple-600 to-green-400 hover:cursor-pointer">
+          <div className="w-40 rounded-2xl bg-gradient-to-br from-purple-800 to-green-800 hover:cursor-pointer">
             <button
               onClick={connectWallet}
               type="button"
@@ -236,7 +236,7 @@ export default function WalletLogin() {
                 onClick={login}
                 className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm"
               >
-                Enterprise Portal 
+                Profile 
               </button>
               <button
                 onClick={disconnectWallet}

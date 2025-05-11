@@ -1,11 +1,11 @@
 import Hero from '@/components/Hero';
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
-    return (
-        <main>
-            <div className='h-screen'>
-                <Hero />
-            </div>
-        </main>
-    );
+  return (
+    <main className="relative">
+      <Navbar />
+      <Hero />
+    </main>
+  );
 }
