@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { FaSearch, FaPlus } from 'react-icons/fa';
 import PendingPayments from './PendingPayments';
+import PurchaseHistory from './PurchaseHistory';
 
 export default function Profile({ walletAddress }: { walletAddress: string }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('Tokens');
   const [hydrated, setHydrated] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -17,7 +19,9 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
           <PendingPayments />
         </div>;
       case 'Purchase History':
-        return <div className="text-white">Purchase History Content</div>;
+        return <div className="text-white">
+          <PurchaseHistory />
+        </div>;
       case 'Tokens':
         return <div className="text-white">Tokens Content</div>;
       case 'Listings':
@@ -91,9 +95,23 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
           <div className="text-sm text-gray-300">
             {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching balance...'}
           </div>
-          <div className="w-10 h-10 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
+          <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
         </div>
       </div>
+
+      {isDropdownOpen && (
+            <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mt-60">
+              <div className="px-4 py-2 font-semibold border-b border-gray-700">
+                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                <div className="text-sm text-gray-400">
+                  {balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}
+                </div>
+              </div>
+              <button  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500">
+                Logout
+              </button>
+            </div>
+          )}
 
       {/* Stats */}
       <div className="px-10 mt-4 flex justify-between text-gray-400 text-sm">
