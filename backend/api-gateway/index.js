@@ -13,7 +13,7 @@ app.use(express.json());  // ✅ for JSON body
 app.use(express.urlencoded({ extended: true }));  // optional: for form-data
 app.use(cookieParser());
 app.use(cors({
-    origin: 'http://localhost:3000',  // ⚠️ Update to your frontend URL if needed
+    origin: 'http://localhost:3000',  
     credentials: true,
 }));
 

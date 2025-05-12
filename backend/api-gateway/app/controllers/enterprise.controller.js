@@ -1,5 +1,4 @@
 import axios from 'axios';
-import authMiddleware from '../middleware/auth.middleware.js';
 
 export const upload = async (req, res) => {
   try {

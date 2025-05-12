@@ -1,8 +1,11 @@
 import Profile from './Profile';
-export default function Page() {
+
+export default async function Page({ params }: { params: Promise<{ address: string }> }) {
+  const { address } = await params;
+
   return (
-  <div>
-    <Profile />
-  </div>
+    <div>
+      <Profile walletAddress={address} />
+    </div>
   );
 }

@@ -1,26 +1,97 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { FaSearch, FaPlus } from 'react-icons/fa';
+import PendingPayments from './PendingPayments';
 
-
-export default function Profile() {
+export default function Profile({ walletAddress }: { walletAddress: string }) {
+  const [balance, setBalance] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('Tokens');
+  const [hydrated, setHydrated] = useState(false);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'Pending Payments':
+        return <div className="text-white">
+          <PendingPayments />
+        </div>;
+      case 'Purchase History':
+        return <div className="text-white">Purchase History Content</div>;
+      case 'Tokens':
+        return <div className="text-white">Tokens Content</div>;
+      case 'Listings':
+        return <div className="text-white">Listings Content</div>;
+      case 'Offers':
+        return <div className="text-white">Offers Content</div>;
+      case 'Activity':
+        return <div className="text-white">Activity Content</div>;
+      default:
+        return <div className="text-white">Select a Tab</div>;
+    }
+  };
+
+
+  useEffect(() => {
+    // ✅ Ensure this runs only on client (hydration guard)
+    if (typeof window !== 'undefined') {
+      setHydrated(true);
+
+      const storedBalance = localStorage.getItem('balance');
+      const storedWallet = localStorage.getItem('walletAddress');
+
+      // ✅ Load from localStorage if wallet matches
+      if (storedWallet === walletAddress && storedBalance) {
+        setBalance(parseFloat(storedBalance));
+      }
+
+      // ✅ Fetch fresh balance from chain
+      const fetchBalance = async () => {
+        const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+        const pubKey = new PublicKey(walletAddress);
+        const lamports = await connection.getBalance(pubKey);
+        const sol = lamports / 1e9;
+        setBalance(sol);
+        localStorage.setItem('balance', sol.toString());
+      };
+
+      fetchBalance();
+    }
+  }, [walletAddress]);
+
+  const getColorFromWallet = (address: string): string => {
+    let hash = 0;
+    for (let i = 0; i < address.length; i++) {
+      hash = address.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = hash % 360;
+    return `hsl(${hue}, 70%, 50%)`; // Hue based color
+  };
+
+
+  if (!hydrated) {
+    return <div className="text-white p-10">Loading profile...</div>;
+  }
 
   return (
-    <div className="bg-gradient-to-b from-amber-900 via-gray-900 to-black text-white  h-screen overflow-hidden w-full">
+    <div className="bg-gradient-to-b from-violet-400 via-gray-900 to-black text-white h-screen overflow-hidden w-full">
       {/* Header */}
+
       <div className="px-10 pt-6 flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 rounded-full bg-orange-400" />
+          <div className="w-16 h-16 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
           <div>
-            <h1 className="text-xl font-semibold">3RJHbR...4TDH</h1>
-            <div className="text-sm text-gray-400">JOINED MAY 2025</div>
+            <div className="text-sm text-gray-300">
+              {walletAddress}
+            </div>
+            <div className="text-sm text-gray-400">Wallet Owner</div>
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-300">0.00 SOL</div>
-          <div className="w-10 h-10 rounded-full bg-orange-400" />
+          <div className="text-sm text-gray-300">
+            {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching balance...'}
+          </div>
+          <div className="w-10 h-10 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
         </div>
       </div>
 
@@ -31,7 +102,7 @@ export default function Profile() {
           <span className="bg-gray-800 px-2 py-1 rounded">LOYALTY 100%</span>
         </div>
         <div className="flex space-x-6">
-          <div>NET WORTH: <span className="text-white">0.00 SOL</span></div>
+          <div>NET WORTH: <span className="text-white">{balance !== null ? balance.toFixed(2) : '0.00'} SOL</span></div>
           <div>USD VALUE: <span className="text-white">$0.00</span></div>
           <div>NFTs: <span className="text-white">0%</span></div>
           <div>TOKENS: <span className="text-white">0%</span></div>
@@ -41,11 +112,11 @@ export default function Profile() {
 
       {/* Tabs */}
       <div className="mt-6 px-10 flex space-x-6 border-b border-gray-700">
-        {['Galleries', 'NFTs', 'Tokens', 'Listings', 'Offers', 'Portfolio', 'Created', 'Watchlist', 'Favorites', 'Activity'].map(tab => (
+        {['Pending Payments', 'Purchase History', 'Tokens', 'Offers', 'Activity'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-2 ${activeTab === tab ? 'border-b-2 border-white' : 'text-gray-400'}`}
+            className={`cursor-pointer pb-2 ${activeTab === tab ? 'border-b-2 border-white' : 'text-gray-400'}`}
           >
             {tab}
           </button>
@@ -54,7 +125,6 @@ export default function Profile() {
 
       {/* Main Content */}
       <div className="flex px-10 mt-6">
-        {/* Left Sidebar */}
         <div className="w-1/4">
           <h2 className="text-lg font-semibold mb-2">Category</h2>
           <div className="flex flex-wrap gap-2 text-sm text-black">
@@ -70,18 +140,16 @@ export default function Profile() {
           <div className="h-12 bg-gray-800 mb-4 rounded" />
         </div>
 
-        {/* Right Content */}
         <div className="w-3/4 pl-10">
           <div className="bg-gray-800 h-10 rounded flex items-center px-4 text-gray-400">
             <FaSearch className="mr-2" />
             <input className="bg-transparent outline-none w-full" placeholder="Search" />
           </div>
 
-          <div className="mt-20 flex justify-center items-center">
-            <div className="bg-gray-900 p-6 rounded-full">
-              🔍
-            </div>
+          <div className="mt-10">
+            {renderTabContent()}
           </div>
+
         </div>
       </div>
     </div>
