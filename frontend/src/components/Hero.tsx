@@ -1,13 +1,18 @@
 import { TextGenerateEffect } from './ui/TextGenerateEffect';
 import MagicButton from './MagicButton';
 import { FaLocationArrow } from 'react-icons/fa6';
+import { WavyBackground } from './ui/wavy-background'
+
 
 
 export default function Hero() {
     return (
         <div className="relative h-screen overflow-hidden w-full">
             {/* Background image layer */}
-            <div className="absolute inset-0 bg-[url('/sol.png')] bg-cover bg-center z-0 w-full" />
+            <div className='z-10 absolute inset-0'>
+                <WavyBackground />
+            </div>
+            <div className="absolute inset-0 bg-cover bg-center z-0 w-full" />
             <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10" />
 
             {/* Content Layer */}

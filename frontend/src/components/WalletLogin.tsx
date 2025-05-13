@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { useRouter } from 'next/navigation'; // ✅ App Router
+import { useRouter } from 'next/navigation'; 
 
 type SignedMessage = {
   signature: Uint8Array;
@@ -163,7 +163,7 @@ export default function WalletLogin() {
             <button
               onClick={connectWallet}
               type="button"
-              className="w-full h-10 text-white text-sm font-medium rounded-md flex items-center justify-center gap-2"
+              className="w-full h-10 cursor-pointer text-white text-sm font-medium rounded-md flex items-center justify-center gap-2"
             >
               Connect Wallet
             </button>

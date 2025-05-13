@@ -8,7 +8,7 @@ import PurchaseHistory from './PurchaseHistory';
 
 export default function Profile({ walletAddress }: { walletAddress: string }) {
   const [balance, setBalance] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState('Tokens');
+  const [activeTab, setActiveTab] = useState('Pending Payments');
   const [hydrated, setHydrated] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
