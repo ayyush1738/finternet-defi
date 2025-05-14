@@ -18,7 +18,7 @@ pool.connect((err, client, release) => {
             username TEXT UNIQUE,
             email TEXT UNIQUE,
             wallet_address TEXT UNIQUE NOT NULL,
-            role TEXT CHECK(role IN ('investor', 'enterprise', 'buyer')) NOT NULL DEFAULT 'investor'
+            role TEXT CHECK(role IN ('investor', 'enterprise')) NOT NULL DEFAULT 'investor'
         );
     `;
 

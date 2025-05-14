@@ -24,7 +24,7 @@ export default function Collections() {
                 background: 'linear-gradient(to bottom, #7c3aed, #1f2937)',
             }}
         >
-            <h2 className="text-2xl font-semibold mb-6 text-white">Collections</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-white">#Collections</h2>
             <div className="overflow-x-auto rounded-xl shadow-lg bg-gray-800/60 backdrop-blur-lg">
                 <table className="min-w-full table-auto text-left text-sm text-gray-300">
                     <thead className="bg-gray-900/80 sticky top-0 z-10">

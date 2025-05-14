@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 
 type SignedMessage = {
   signature: Uint8Array;
@@ -95,7 +95,7 @@ export default function WalletLogin() {
       const encodedMsg = new TextEncoder().encode(nonce);
       const signedMessage: SignedMessage = await provider.signMessage(encodedMsg, 'utf8');
 
-      const loginRes = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const loginRes = await fetch('http://localhost:8000/api/v1/auth/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -108,15 +108,20 @@ export default function WalletLogin() {
       const data: LoginResponse = await loginRes.json();
 
       if (loginRes.ok) {
+        if (data.role !== 'investor') {
+          setStatus('Access denied: Only investors can login');
+          return;
+        }
+
         setStatus('Login successful');
         setToken(data.token);
         localStorage.setItem('jwt', data.token);
 
-        // ✅ Redirect to dynamic profile page
         router.push(`/profile/${walletAddress}`);
       } else {
         setStatus(`Login failed: ${data.message}`);
       }
+
     } catch (err: any) {
       console.error(err);
       setStatus(`Login error: ${err.message}`);

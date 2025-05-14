@@ -64,6 +64,65 @@ export const login = async (req, res) => {
     }
 };
 
+export const enterpriseLogin = async (req, res) => {
+    const { wallet_address, signature, nonce, username } = req.body;
+    const storedNonce = nonces.get(wallet_address);
+
+    if (!storedNonce || storedNonce !== nonce) {
+        return res.status(400).json({ message: 'Invalid or expired nonce' });
+    }
+
+    try {
+        const pubKey = new PublicKey(wallet_address);
+        const messageBytes = new TextEncoder().encode(nonce);
+        const sigBytes = signature.data ? Uint8Array.from(signature.data) : Uint8Array.from(signature);
+
+        const isValid = nacl.sign.detached.verify(messageBytes, sigBytes, pubKey.toBytes());
+        if (!isValid) return res.status(401).json({ message: 'Invalid signature' });
+
+        findUserByWallet(wallet_address, async (err, user) => {
+            if (err && err !== 'User not found') return res.status(400).json({ message: err });
+
+            if (!user) {
+                if (!username) {
+                    return res.status(400).json({ message: 'Organization name (username) is required' });
+                }
+
+                // Auto-create user as enterprise with username
+                await db.query(
+                    "INSERT INTO users (wallet_address, role, username) VALUES ($1, $2, $3)",
+                    [wallet_address, 'enterprise', username]
+                );
+                user = { wallet_address, role: 'enterprise', username };
+                console.log(`Auto-registered enterprise: ${username} (${wallet_address})`);
+            }
+
+            const token = jwt.sign(
+                { wallet_address: wallet_address, role: user.role },
+                JWT_SECRET,
+                { expiresIn: "6h" }
+            );
+
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "Strict",
+                path: "/",
+                maxAge: 6 * 60 * 60 * 1000,
+            });
+
+            nonces.delete(wallet_address);
+
+            res.json({ message: "Login successful", token, role: user.role });
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Signature verification failed' });
+    }
+};
+
+
 
 // Generates nonce per wallet
 export const getNonce = (req, res) => {
@@ -75,12 +134,12 @@ export const getNonce = (req, res) => {
     res.json({ nonce });
 };
 
-export const register = (req, res) => {
-    const { wallet_address, username, email, role } = req.body;
-    if (!wallet_address || !role) return res.status(400).json({ message: 'wallet_address and role required' });
+// export const register = (req, res) => {
+//     const { wallet_address, username, email, role } = req.body;
+//     if (!wallet_address || !role) return res.status(400).json({ message: 'wallet_address and role required' });
 
-    updateUserProfile(wallet_address, username, email, role, (err, result) => {
-        if (err) return res.status(400).json({ message: err });
-        res.json({ message: result });
-    });
-};
+//     updateUserProfile(wallet_address, username, email, role, (err, result) => {
+//         if (err) return res.status(400).json({ message: err });
+//         res.json({ message: result });
+//     });
+// };
