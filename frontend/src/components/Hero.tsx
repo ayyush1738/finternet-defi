@@ -10,18 +10,20 @@ export default function Hero() {
         <div className="relative h-screen overflow-hidden w-full">
             {/* Background image layer */}
             <div className='z-10 absolute inset-0'>
-                <WavyBackground />
+                <WavyBackground backgroundFill="#020009" />
             </div>
             <div className="absolute inset-0 bg-cover bg-center z-0 w-full" />
             <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10" />
 
             {/* Content Layer */}
             <div className="relative z-20 flex flex-col items-center justify-center h-full w-full text-center px-4">
-                <h1 className="text-white text-5xl font-bold mb-4">ChainVoice</h1>
+                <div className='flex'>
+                    <h1 className="text-white text-5xl font-bold mb-4">Cha</h1><h1 className="text-fuchsia-600 text-5xl font-bold mb-4">inVoice</h1>
+                </div>
                 <div className='w-1/2'>
                     <TextGenerateEffect
                         className="text-white text-[10px] md:text-xl lg:text-2xl"
-                        words="A decentralized marketplace for tokenized invoices, enabling SMEs to access instant liquidity and investors to earn fixed returns. Verified by AI, secured on Solana, and settled via Finternet’s unified ledger — bringing trustless, global invoice financing to the on-chain economy. No banks. No delays. Just capital, unlocked."
+                        words="A decentralized marketplace for tokenized invoices, enabling instant liquidity for SMEs and returns for investors"
                     />
                     <div className="w-56 mx-auto mt-6">
                         <a href="/enterprise">
