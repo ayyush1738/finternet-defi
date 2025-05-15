@@ -63,13 +63,10 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
     }
   }, [walletAddress]);
 
-  const getColorFromWallet = (address: string): string => {
-    let hash = 0;
-    for (let i = 0; i < address.length; i++) {
-      hash = address.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const hue = hash % 360;
-    return `hsl(${hue}, 70%, 50%)`; // Hue based color
+  const getColorFromWallet = (address: string) => {
+    const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = ['#F87171', '#60A5FA', '#34D399', '#FBBF24', '#A78BFA', '#F472B6'];
+    return colors[hash % colors.length];
   };
 
 

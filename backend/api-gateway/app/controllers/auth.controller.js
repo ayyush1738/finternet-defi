@@ -95,6 +95,15 @@ export const enterpriseLogin = async (req, res) => {
                 );
                 user = { wallet_address, role: 'enterprise', username };
                 console.log(`Auto-registered enterprise: ${username} (${wallet_address})`);
+            } else {
+                // ❗ Username check for existing user
+                if (user.role !== 'enterprise') {
+                    return res.status(403).json({ message: 'Access denied: Not an enterprise user' });
+                }
+
+                if (user.username !== username) {
+                    return res.status(403).json({ message: 'Access denied: Wrong username' });
+                }
             }
 
             const token = jwt.sign(
