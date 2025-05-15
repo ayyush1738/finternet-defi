@@ -5,6 +5,8 @@ import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { FaEthereum } from 'react-icons/fa';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { useRouter } from 'next/navigation';
+import { Transaction } from '@solana/web3.js';
+
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -48,10 +50,69 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     }
   };
 
-  const handleMint = () => {
-    alert(`Minting NFT for ${fileName}`);
-    // TODO: Call minting logic
+  const handleMint = async () => {
+    if (!fileName || !name || !price) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      if (!fileInput.files || !fileInput.files[0]) {
+        alert('Please select a PDF file');
+        return;
+      }
+
+      formData.append('file', fileInput.files[0]);
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('price', price);
+      formData.append('royalties', royalties);
+
+      const res = await fetch('http://localhost:8000/api/v1/invoice/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Upload failed');
+      }
+
+      const { ipfs_cid, transaction_base64 } = await res.json();
+
+      const provider = (window as any).solana;
+      if (!provider || !provider.isPhantom) {
+        alert('Phantom Wallet not found');
+        return;
+      }
+
+      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+
+      const transactionBuffer = Buffer.from(transaction_base64, 'base64');
+      const transaction = Transaction.from(transactionBuffer);
+
+      const signedTx = await provider.signTransaction(transaction);
+      const txid = await connection.sendRawTransaction(signedTx.serialize());
+
+      await connection.confirmTransaction(txid, 'confirmed');
+
+      alert(`NFT Minted Successfully!\nTxID: ${txid}\nIPFS: https://ipfs.io/ipfs/${ipfs_cid}`);
+
+      // Optional: reset form
+      setFileName(null);
+      setName('');
+      setDescription('');
+      setPrice('');
+      setRoyalties('10');
+
+    } catch (err: any) {
+      console.error('Minting failed', err);
+      alert(`Minting failed: ${err.message}`);
+    }
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem('jwt');
