@@ -1,8 +1,11 @@
-// auth.routes.js
 import { Router } from 'express';
-import { upload } from '../controllers/invoice.controller.js'
-const router = Router();
+import { upload, getInvoices } from '../controllers/invoice.controller.js';
+import multer from 'multer';
 
-router.get("/upload", upload);
+const router = Router();
+const uploadMiddleware = multer();
+
+router.post('/upload', uploadMiddleware.single('file'), upload);
+router.get('/list', getInvoices);
 
 export default router;

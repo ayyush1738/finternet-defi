@@ -1,4 +1,3 @@
-// dbConnect.js
 import { Pool } from 'pg';
 import 'dotenv/config';
 
@@ -8,7 +7,8 @@ const pool = new Pool({
 
 pool.connect((err, client, release) => {
     if (err) {
-        return console.error("Connection error", err.stack);
+        console.error("Connection error", err.stack);
+        return;
     }
     console.log("Connected to the PostgreSQL database.");
 
@@ -19,6 +19,15 @@ pool.connect((err, client, release) => {
             email TEXT UNIQUE,
             wallet_address TEXT UNIQUE NOT NULL,
             role TEXT CHECK(role IN ('investor', 'enterprise')) NOT NULL DEFAULT 'investor'
+        );
+
+        CREATE TABLE IF NOT EXISTS invoices (
+            id SERIAL PRIMARY KEY,
+            cid TEXT NOT NULL,
+            tx_sig TEXT NOT NULL,
+            amount FLOAT NOT NULL,
+            creator TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
         );
     `;
 
