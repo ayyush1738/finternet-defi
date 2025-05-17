@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { FaEthereum } from 'react-icons/fa';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useRouter } from 'next/navigation';
-import { Transaction } from '@solana/web3.js';
-
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -65,10 +63,9 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       }
 
       formData.append('file', fileInput.files[0]);
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('price', price);
-      formData.append('royalties', royalties);
+      formData.append('amount', price);
+      formData.append('due_ts', Math.floor(Date.now() / 1000).toString());
+      formData.append('creator', walletAddress); // ✅ actual connected wallet
 
       const res = await fetch('http://localhost:8000/api/v1/invoice/upload', {
         method: 'POST',
@@ -81,7 +78,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       }
 
       const { ipfs_cid, transaction_base64 } = await res.json();
-
       const provider = (window as any).solana;
       if (!provider || !provider.isPhantom) {
         alert('Phantom Wallet not found');
@@ -89,24 +85,14 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       }
 
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-
       const transactionBuffer = Buffer.from(transaction_base64, 'base64');
       const transaction = Transaction.from(transactionBuffer);
 
       const signedTx = await provider.signTransaction(transaction);
       const txid = await connection.sendRawTransaction(signedTx.serialize());
-
       await connection.confirmTransaction(txid, 'confirmed');
 
       alert(`NFT Minted Successfully!\nTxID: ${txid}\nIPFS: https://ipfs.io/ipfs/${ipfs_cid}`);
-
-      // Optional: reset form
-      setFileName(null);
-      setName('');
-      setDescription('');
-      setPrice('');
-      setRoyalties('10');
-
     } catch (err: any) {
       console.error('Minting failed', err);
       alert(`Minting failed: ${err.message}`);
@@ -237,3 +223,5 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     </div>
   );
 }
+
+

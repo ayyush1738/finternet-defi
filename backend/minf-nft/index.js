@@ -2,15 +2,22 @@ import express from 'express';
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(cors({
+    origin: '*',  // ✅ Use '*' or specific domain e.g. 'http://localhost:3000'
+    credentials: true,
+}));
 
-// Solana connection
 const connection = new Connection("https://api.devnet.solana.com", 'confirmed');
 
-// Load mint authority keypair from env
-const secret = JSON.parse(process.env.MINT_AUTHORITY_PRIVATE_KEY); // Put your private key as JSON array in env
+// ✅ Make sure you have stored the PRIVATE KEY as JSON array in env
+const secret = JSON.parse(process.env.MINT_AUTHORITY_PRIVATE_KEY);
 const mintAuthority = Keypair.fromSecretKey(Uint8Array.from(secret));
 
 app.post('/mint', async (req, res) => {
@@ -21,30 +28,31 @@ app.post('/mint', async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Generate a fake mint (In real-world, integrate with Anchor program here)
-    const invoiceMint = Keypair.generate();
+    const creatorPubkey = new PublicKey(creator); // Validate creator address
 
-    // Create fake transaction for demo purpose
+    // Create transaction where user is sender and payer
     const transaction = new Transaction().add(
       SystemProgram.transfer({
-        fromPubkey: mintAuthority.publicKey,
-        toPubkey: new PublicKey(creator), // In real, will be creator's associated token account
-        lamports: 1000, // Mock transfer (e.g. for staking, setup)
+        fromPubkey: creatorPubkey,
+        toPubkey: mintAuthority.publicKey,
+        lamports: 1000, // For demo only
       })
     );
 
-    transaction.feePayer = mintAuthority.publicKey;
+    transaction.feePayer = creatorPubkey;
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-    transaction.sign(mintAuthority);
 
-    const serializedTx = transaction.serialize().toString('base64');
-    const txSig = uuidv4(); // You can also get real txid using connection.sendRawTransaction
+    const serializedTx = transaction.serialize({
+      requireAllSignatures: false,
+      verifySignatures: false,
+    }).toString('base64');
+
+    const txSig = uuidv4(); // ❗Mock sig only for backend reference
 
     res.json({
       transaction_base64: serializedTx,
       txSig: txSig,
     });
-
   } catch (err) {
     console.error('Mint service error:', err);
     res.status(500).json({ message: 'Minting error', error: err.message });
