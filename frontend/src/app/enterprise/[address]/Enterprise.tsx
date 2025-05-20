@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { FaEthereum } from 'react-icons/fa';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
 import { useRouter } from 'next/navigation';
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
@@ -44,7 +44,12 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFileName(e.target.files[0].name);
+      const file = e.target.files[0];
+      if (file.size > 50 * 1024 * 1024) {
+        alert('File too large. Max 50MB allowed.');
+        return;
+      }
+      setFileName(file.name);
     }
   };
 
@@ -55,50 +60,76 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     }
 
     try {
-      const formData = new FormData();
+      const mintKeypair = Keypair.generate();
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (!fileInput.files || !fileInput.files[0]) {
         alert('Please select a PDF file');
         return;
       }
 
+      const formData = new FormData();
       formData.append('file', fileInput.files[0]);
       formData.append('amount', price);
       formData.append('due_ts', Math.floor(Date.now() / 1000).toString());
-      formData.append('creator', walletAddress); // ✅ actual connected wallet
+      formData.append('creator', walletAddress);
+      formData.append('mint', mintKeypair.publicKey.toString());
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('royalties', royalties);
 
-      const res = await fetch('http://localhost:8000/api/v1/invoice/upload', {
+      const token = localStorage.getItem('jwt');
+      const uploadRes = await fetch('http://localhost:8000/api/v1/invoice/upload', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token || ''}`,
+        },
         body: formData,
       });
 
-      if (!res.ok) {
-        const err = await res.json();
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json();
         throw new Error(err.message || 'Upload failed');
       }
 
-      const { ipfs_cid, transaction_base64 } = await res.json();
+      const { ipfs_cid, transaction_base64 } = await uploadRes.json();
       const provider = (window as any).solana;
       if (!provider || !provider.isPhantom) {
         alert('Phantom Wallet not found');
         return;
       }
 
+      await provider.connect();
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const transactionBuffer = Buffer.from(transaction_base64, 'base64');
       const transaction = Transaction.from(transactionBuffer);
 
+      transaction.partialSign(mintKeypair);
       const signedTx = await provider.signTransaction(transaction);
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      alert(`NFT Minted Successfully!\nTxID: ${txid}\nIPFS: https://ipfs.io/ipfs/${ipfs_cid}`);
+      // Finalize
+      await fetch('http://localhost:8000/api/v1/invoice/finalize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token || ''}`,
+        },
+        body: JSON.stringify({
+          cid: ipfs_cid,
+          creator: walletAddress,
+          tx_sig: txid,
+          amount: price,
+        }),
+      });
+
+      alert(`✅ NFT Minted Successfully!\nTxID: ${txid}\nIPFS: https://ipfs.io/ipfs/${ipfs_cid}`);
+      window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
     } catch (err: any) {
       console.error('Minting failed', err);
       alert(`Minting failed: ${err.message}`);
     }
   };
-
 
   const handleLogout = () => {
     localStorage.removeItem('jwt');
@@ -111,9 +142,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
           <div>
-            <div className="text-sm text-gray-300">
-              {walletAddress}
-            </div>
+            <div className="text-sm text-gray-300">{walletAddress}</div>
             <div className="text-sm text-gray-400">Wallet Owner</div>
           </div>
         </div>
@@ -148,7 +177,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       <h1 className="text-4xl font-bold mb-6">Mint PDF as NFT</h1>
 
       <div className="w-full max-w-xl bg-zinc-800 rounded-2xl p-6 shadow-lg space-y-6">
-        {/* Upload Section */}
         <div className="border-2 border-dashed border-zinc-600 rounded-lg p-6 text-center">
           <AiOutlineCloudUpload className="text-6xl mx-auto mb-4 text-zinc-500" />
           <p className="text-sm">Upload your PDF file</p>
@@ -160,7 +188,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
           {fileName && <p className="mt-2 text-green-400 text-sm">Selected: {fileName}</p>}
         </div>
 
-        {/* NFT Details */}
         <div className="space-y-4">
           <div>
             <label className="block mb-1 text-sm">NFT Name</label>
@@ -211,7 +238,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
           </div>
         </div>
 
-        {/* Mint Button */}
         <button
           onClick={handleMint}
           disabled={!fileName || !name || !price}
@@ -223,4 +249,3 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     </div>
   );
 }
-

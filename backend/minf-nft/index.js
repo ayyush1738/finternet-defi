@@ -1,83 +1,128 @@
-// ✅ Minting Service for NFT (umi + irys)
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import {
-  createGenericFile,
-  generateSigner,
-  percentAmount,
-  signerIdentity,
-} from '@metaplex-foundation/umi';
-import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { irysUploader } from '@metaplex-foundation/umi-uploader-irys';
-import { createFungible, mplTokenMetadata } from '@metaplex-foundation/mpl-token-metadata';
-import { createTokenIfMissing } from '@metaplex-foundation/mpl-toolbox';
+  Connection,
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
+
+import {
+  createCreateMetadataAccountV3Instruction,
+} from '@metaplex-foundation/mpl-token-metadata';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-const PORT = 5000;
+const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+
+
+// 🧠 Find PDA for metadata account
+const findMetadataPDA = async (mintPublicKey) => {
+  const [pda] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from('metadata'),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mintPublicKey.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  );
+  return pda;
+};
 
 app.post('/mint', async (req, res) => {
   try {
-    console.log('[REQ BODY]', req.body);
-    const { amount, due_ts, risk, cid, creator } = req.body;
+    const {
+      amount,
+      due_ts,
+      risk,
+      cid,
+      creator,
+      mint,
+      name,
+      description,
+      royalties,
+    } = req.body;
 
-    if (!cid || !creator || !amount) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    if (!cid || !creator || !mint) {
+      return res
+        .status(400)
+        .json({ message: 'Missing required fields: cid, creator, or mint' });
     }
 
-    const umi = createUmi('https://api.devnet.solana.com')
-      .use(irysUploader())
-      .use(mplTokenMetadata());
+    console.log('[REQUEST]', { mint, creator });
 
-    const secretKey = Uint8Array.from(JSON.parse(process.env.MINT_AUTHORITY_PRIVATE_KEY));
-    umi.use(signerIdentity(generateSigner(umi, secretKey)));
+    let mintPublicKey, userPublicKey;
+    try {
+      mintPublicKey = new PublicKey(mint);
+      userPublicKey = new PublicKey(creator);
+    } catch (err) {
+      console.error('Invalid PublicKey:', err.message);
+      return res.status(400).json({ message: 'Invalid creator or mint address' });
+    }
 
-    const metadata = {
-      name: `Invoice NFT`,
-      description: `Invoice NFT with risk score ${risk} and amount ${amount} SOL`,
-      image: `https://ipfs.io/ipfs/${cid}`,
-      properties: {
-        type: 'document/pdf',
-        amount,
-        due: due_ts,
-        riskScore: risk,
+    const metadataPDA = await findMetadataPDA(mintPublicKey);
+
+    const metadataURI = `https://ipfs.io/ipfs/${cid}`;
+    const nftName = name || 'Untitled NFT';
+    const nftDescription = description || '';
+    const sellerFeeBasisPoints = parseInt(royalties) * 100 || 1000;
+
+    const metadataIx =   createCreateMetadataAccountV2Instruction(
+      {
+        metadata: metadataPDA,
+        mint: mintPublicKey,
+        mintAuthority: userPublicKey,
+        payer: userPublicKey,
+        updateAuthority: userPublicKey,
       },
-    };
+      {
+        createMetadataAccountArgsV3: {
+          data: {
+            name: nftName,
+            symbol: '',
+            uri: metadataURI,
+            sellerFeeBasisPoints,
+            creators: [
+              {
+                address: userPublicKey,
+                verified: false,
+                share: 100,
+              },
+            ],
+          },
+          isMutable: true,
+          collectionDetails: null,
+        },
+      }
+    );
 
-    const metadataFile = createGenericFile(Buffer.from(JSON.stringify(metadata)), 'metadata.json');
-    const [metadataUri] = await umi.uploader.upload([metadataFile]);
+    const latestBlockhash = await connection.getLatestBlockhash();
 
-    const mint = generateSigner(umi);
-    await createTokenIfMissing(umi, mint);
-
-    const tx = await createFungible(umi, {
-      mint,
-      authority: umi.identity,
-      name: metadata.name,
-      symbol: 'PDFNFT',
-      uri: metadataUri,
-      sellerFeeBasisPoints: percentAmount(10, 2),
-      decimals: 0,
-    }).sendAndConfirm(umi);
-
-    res.json({
-      txSig: tx.signature,
-      nftAddress: mint.publicKey.toString(),
-      metadataUri,
-      transaction_base64: Buffer.from(tx.bytes).toString('base64'),
+    const transaction = new Transaction({
+      feePayer: userPublicKey,
+      recentBlockhash: latestBlockhash.blockhash,
     });
+
+    transaction.add(metadataIx);
+
+    const serialized = transaction.serialize({
+      requireAllSignatures: false,
+    });
+
+    const transaction_base64 = serialized.toString('base64');
+
+    res.json({ transaction_base64 });
   } catch (err) {
-    console.error('[MINT ERROR]', err);
-    res.status(500).json({ message: 'Minting failed', error: err?.message || 'Unknown error', details: err });
+    console.error('❌ Mint error:', err.stack || err.message);
+    res.status(500).json({ message: err.message || 'Minting failed' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Minting service running at http://localhost:${PORT}`);
+app.listen(5000, () => {
+  console.log('⚡ Minting service running at http://localhost:5000');
 });
