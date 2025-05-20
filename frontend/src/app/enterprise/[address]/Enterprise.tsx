@@ -224,4 +224,3 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   );
 }
 
-

@@ -2,6 +2,8 @@ import axios from 'axios';
 import db from '../config/dbConnect.js';
 
 export const upload = async (req, res) => {
+
+  console.log(req.body);
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ message: 'No file uploaded' });
@@ -9,14 +11,17 @@ export const upload = async (req, res) => {
     const fileB64 = file.buffer.toString('base64');
 
     const ocrResp = await axios.post('http://localhost:8001/analyze', { file_b64: fileB64 });
-    const riskResp = await axios.post('http://localhost:8003/score', { text: ocrResp.data.text });
+    const riskResp = await axios.post('http://localhost:8002/score', { text: ocrResp.data.text });
     const web3Resp = await axios.post('http://localhost:5000/mint', {
       amount: req.body.amount,
       due_ts: req.body.due_ts,
       risk: riskResp.data.risk,
       cid: ocrResp.data.cid,
-      creator: req.body.creator, // ✅ from frontend wallet address
+      creator: req.body.creator,
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
+
 
     await db.query(
       "INSERT INTO invoices (cid, tx_sig, amount, creator, created_at) VALUES ($1, $2, $3, $4, NOW())",
