@@ -72,7 +72,7 @@ app.post('/mint', async (req, res) => {
     const nftDescription = description || '';
     const sellerFeeBasisPoints = parseInt(royalties) * 100 || 1000;
 
-    const metadataIx =   createCreateMetadataAccountV2Instruction(
+    const metadataIx =   createCreateMetadataAccountV3Instruction(
       {
         metadata: metadataPDA,
         mint: mintPublicKey,
@@ -83,18 +83,21 @@ app.post('/mint', async (req, res) => {
       {
         createMetadataAccountArgsV3: {
           data: {
-            name: nftName,
-            symbol: '',
-            uri: metadataURI,
-            sellerFeeBasisPoints,
-            creators: [
-              {
-                address: userPublicKey,
-                verified: false,
-                share: 100,
-              },
-            ],
-          },
+  name: nftName,
+  symbol: '',
+  uri: metadataURI,
+  sellerFeeBasisPoints,
+  creators: [
+    {
+      address: userPublicKey,
+      verified: false,
+      share: 100,
+    },
+  ],
+  collection: null,
+  uses: null,
+},
+
           isMutable: true,
           collectionDetails: null,
         },

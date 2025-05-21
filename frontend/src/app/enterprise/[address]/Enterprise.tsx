@@ -60,7 +60,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     }
 
     try {
-      const mintKeypair = Keypair.generate();
+      const mintKeypair = walletAddress;
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (!fileInput.files || !fileInput.files[0]) {
         alert('Please select a PDF file');
@@ -72,7 +72,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       formData.append('amount', price);
       formData.append('due_ts', Math.floor(Date.now() / 1000).toString());
       formData.append('creator', walletAddress);
-      formData.append('mint', mintKeypair.publicKey.toString());
+      formData.append('mint', mintKeypair);
       formData.append('name', name);
       formData.append('description', description);
       formData.append('royalties', royalties);
@@ -103,7 +103,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       const transactionBuffer = Buffer.from(transaction_base64, 'base64');
       const transaction = Transaction.from(transactionBuffer);
 
-      transaction.partialSign(mintKeypair);
       const signedTx = await provider.signTransaction(transaction);
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
