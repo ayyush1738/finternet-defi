@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { FaEthereum } from 'react-icons/fa';
-import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useRouter } from 'next/navigation';
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
