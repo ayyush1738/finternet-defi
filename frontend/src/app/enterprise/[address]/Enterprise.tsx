@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { FaEthereum } from 'react-icons/fa';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
 import { useRouter } from 'next/navigation';
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
@@ -60,7 +60,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     }
 
     try {
-      const mintKeypair = walletAddress;
+      const mintKeypair = Keypair.generate();
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (!fileInput.files || !fileInput.files[0]) {
         alert('Please select a PDF file');
@@ -72,7 +72,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       formData.append('amount', price);
       formData.append('due_ts', Math.floor(Date.now() / 1000).toString());
       formData.append('creator', walletAddress);
-      formData.append('mint', mintKeypair);
+      formData.append('mint', mintKeypair.publicKey.toString());
       formData.append('name', name);
       formData.append('description', description);
       formData.append('royalties', royalties);
@@ -103,11 +103,11 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       const transactionBuffer = Buffer.from(transaction_base64, 'base64');
       const transaction = Transaction.from(transactionBuffer);
 
+      transaction.partialSign(mintKeypair); // Sign with mint authority
       const signedTx = await provider.signTransaction(transaction);
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      // Finalize
       await fetch('http://localhost:8000/api/v1/invoice/finalize', {
         method: 'POST',
         headers: {

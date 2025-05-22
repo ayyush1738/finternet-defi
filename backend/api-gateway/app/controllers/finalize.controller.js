@@ -3,7 +3,8 @@ import db from '../config/dbConnect.js';
 export const finalize = async (req, res) => {
   try {
     const { cid, tx_sig } = req.body;
-    if (!cid || !tx_sig) return res.status(400).json({ message: 'cid and tx_sig are required' });
+    if (!cid || !tx_sig)
+      return res.status(400).json({ message: 'cid and tx_sig are required' });
 
     const result = await db.query(
       'UPDATE invoices SET tx_sig = $1 WHERE cid = $2 RETURNING *',
