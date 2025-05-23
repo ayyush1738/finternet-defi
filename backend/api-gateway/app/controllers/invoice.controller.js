@@ -53,3 +53,37 @@ export const getInvoices = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch invoices' });
   }
 };
+
+export const purchaseInvoice = async (req, res) => {
+  try {
+    const { cid, tx_sig, amount, seller, buyer } = req.body;
+
+    if (!cid || !amount || !seller || !buyer) {
+      return res.status(400).json({ message: 'Missing fields' });
+    }
+
+    // Simulate a payment instruction (native SOL transfer)
+    const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+    const fromPub = new PublicKey(buyer);
+    const toPub = new PublicKey(seller);
+
+    const latestBlockhash = await connection.getLatestBlockhash();
+    const tx = new Transaction({
+      feePayer: fromPub,
+      recentBlockhash: latestBlockhash.blockhash,
+    }).add(
+      SystemProgram.transfer({
+        fromPubkey: fromPub,
+        toPubkey: toPub,
+        lamports: parseFloat(amount) * LAMPORTS_PER_SOL,
+      })
+    );
+
+    const serialized = tx.serialize({ requireAllSignatures: false });
+    res.json({ transaction_base64: serialized.toString('base64') });
+  } catch (err) {
+    console.error('❌ Purchase error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { Connection, Transaction } from '@solana/web3.js';
 
 export default function Market() {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -17,6 +18,49 @@ export default function Market() {
     fetchInvoices();
   }, []);
 
+  const handlePurchase = async (inv: any) => {
+    const provider = (window as any).solana;
+    if (!provider || !provider.isPhantom) {
+      alert('Phantom Wallet not found');
+      return;
+    }
+
+    await provider.connect();
+    const buyerAddress = provider.publicKey.toString();
+
+    try {
+      const res = await fetch('http://localhost:8000/api/v1/invoice/purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cid: inv.cid,
+          tx_sig: inv.tx_sig,
+          amount: inv.amount,
+          seller: inv.creator,
+          buyer: buyerAddress,
+        }),
+      });
+
+      const { transaction_base64 } = await res.json();
+
+      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
+
+      const signedTx = await provider.signTransaction(tx);
+      const txid = await connection.sendRawTransaction(signedTx.serialize());
+      await connection.confirmTransaction(txid, 'confirmed');
+
+      alert(`✅ Purchase Successful!\nTx: ${txid}`);
+      window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
+    } catch (err) {
+      console.error('Purchase failed', err);
+      alert('Purchase failed. See console for details.');
+    }
+  };
+
+
   return (
     <div className="p-20 text-white h-auto" style={{ background: 'linear-gradient(to bottom, #020009, #1f2937, #7c3aed)' }}>
       <h2 className="text-2xl font-semibold mb-6 text-white">#Invoice Listing</h2>
@@ -29,28 +73,42 @@ export default function Market() {
               <th className="px-6 py-3">Amount</th>
               <th className="px-6 py-3">Invoice</th>
               <th className="px-6 py-3">Tx</th>
+              <th className="px-6 py-3">Purchase</th>
             </tr>
           </thead>
-          <tbody>
-            {invoices.map((inv) => (
-              <tr key={inv.id} className="hover:bg-gray-700/50 transition duration-200">
-                <td className="px-10 py-4 font-medium">INV-{inv.id}</td>
-                <td className="px-14 py-4">{new Date(inv.created_at).toLocaleDateString()}</td>
-                <td className="px-12 py-4">{inv.amount} SOL</td>
-                <td className="px-8 py-4">
-                  <a href={`https://ipfs.io/ipfs/${inv.cid}`} target="_blank" rel="noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow">
-                    View PDF
-                  </a>
-                </td>
-                <td className="px-8 py-4">
-                  <a href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-emerald-400 underline">
-                    View Tx
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
         </table>
+        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+          <table className="min-w-full table-auto text-left text-sm text-gray-300">
+            <tbody>
+              {invoices.map((inv) => (
+                <tr key={inv.id} className="hover:bg-gray-700/50 transition duration-200">
+                  <td className="px-10 py-4 font-medium">INV-{inv.id}</td>
+                  <td className="px-14 py-4">{new Date(inv.created_at).toLocaleDateString()}</td>
+                  <td className="px-12 py-4">{inv.amount} SOL</td>
+                  <td className="px-8 py-4">
+                    <a href={`https://ipfs.io/ipfs/${inv.cid}`} target="_blank" rel="noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                      View PDF
+                    </a>
+                  </td>
+                  <td className="px-8 py-4">
+                    <a href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-emerald-400 underline">
+                      View Tx
+                    </a>
+                  </td>
+                  <td className="px-8 py-4">
+                    <button
+                      onClick={() => handlePurchase(inv)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded shadow"
+                    >
+                      Buy
+                    </button>
+                  </td>
+
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
