@@ -51,7 +51,7 @@ export default function OnDemandOffset() {
     <div className='ml-20'>
         <h2 className="text-4xl font-bold mb-4">On-Chain Verification</h2>
         <p className="text-lg mb-8">
-          Offset your emissions in real-time with verified carbon credits.
+          Solana powered on-chain user verification.
         </p>
 
         <div className="space-y-6 mr-30">

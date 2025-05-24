@@ -72,6 +72,7 @@ export default function Market() {
               <th className="px-6 py-3">Date Uploaded</th>
               <th className="px-6 py-3">Owner</th>
               <th className="px-6 py-3">Amount</th>
+              <th className='px-6 py-3'>Profit</th>
               <th className="px-6 py-3">Invoice</th>
               <th className="px-6 py-3">Tx</th>
               <th className="px-6 py-3">Purchase</th>
@@ -85,7 +86,7 @@ export default function Market() {
                 <tr key={inv.id} className="hover:bg-gray-700/50 transition duration-200">
                   <td className="px-10 py-4 font-medium">INV-{inv.id}</td>
                   <td className="px-14 py-4">{new Date(inv.created_at).toLocaleDateString()}</td>
-                  <td className="px-12 py-4">Ayush</td>
+                  <td className="px-12 py-4">{inv.name}</td>
                   <td className="px-12 py-4">{inv.amount} SOL</td>
                   <td className="px-12 py-4"></td>
                   <td className="px-8 py-4">

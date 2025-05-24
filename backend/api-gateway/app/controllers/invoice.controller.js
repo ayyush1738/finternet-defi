@@ -31,7 +31,7 @@ export const upload = async (req, res) => {
     // 🗃️ Store invoice (without tx_sig yet)
     await db.query(
       "INSERT INTO invoices (username, cid, amount, creator, created_at) VALUES ($1, $2, $3, NOW())",
-      [req.body.username, ocrResp.data.cid, req.body.amount, req.body.creator, req.body.profit]
+      [req.body.name, ocrResp.data.cid, req.body.amount, req.body.creator, req.body.profit]
     );
 
     // 📨 Respond with transaction
@@ -47,7 +47,7 @@ export const upload = async (req, res) => {
 
 export const getInvoices = async (req, res) => {
   try {
-    const result = await db.query("SELECT id, cid, tx_sig, amount, creator, created_at FROM invoices ORDER BY created_at DESC");
+    const result = await db.query("SELECT id, username, cid, tx_sig, amount, creator, created_at FROM invoices ORDER BY created_at DESC");
     res.json(result.rows);
   } catch (err) {
     console.error(err);
