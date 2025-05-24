@@ -26,7 +26,6 @@ const initDb = async () => {
           cid TEXT NOT NULL,
           tx_sig TEXT,
           amount NUMERIC NOT NULL,
-          profit DECIMAL(10,2),
           creator TEXT NOT NULL,
           created_at TIMESTAMPTZ DEFAULT NOW()
       );
