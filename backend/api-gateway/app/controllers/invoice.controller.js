@@ -17,6 +17,7 @@ export const upload = async (req, res) => {
     // 🧾 Create transaction via NFT minting service
     const web3Resp = await axios.post('http://localhost:5000/mint', {
       amount: req.body.amount,
+      profit: req.body.profit,
       due_ts: req.body.due_ts,
       risk: riskResp.data.risk,
       cid: ocrResp.data.cid,
@@ -29,8 +30,8 @@ export const upload = async (req, res) => {
 
     // 🗃️ Store invoice (without tx_sig yet)
     await db.query(
-      "INSERT INTO invoices (cid, amount, creator, created_at) VALUES ($1, $2, $3, NOW())",
-      [ocrResp.data.cid, req.body.amount, req.body.creator]
+      "INSERT INTO invoices (username, cid, amount, creator, created_at) VALUES ($1, $2, $3, NOW())",
+      [req.body.username, ocrResp.data.cid, req.body.amount, req.body.creator, req.body.profit]
     );
 
     // 📨 Respond with transaction

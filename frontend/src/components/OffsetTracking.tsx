@@ -49,14 +49,14 @@ export default function OnDemandOffset() {
   return (
     <div className='flex absolute m-5'>
     <div className='ml-20'>
-        <h2 className="text-4xl font-bold mb-4">On-Demand Offset</h2>
+        <h2 className="text-4xl font-bold mb-4">On-Chain Verification</h2>
         <p className="text-lg mb-8">
           Offset your emissions in real-time with verified carbon credits.
         </p>
 
         <div className="space-y-6 mr-30">
           {[
-            { title: 'Instant Verification', desc: 'All carbon credits are instantly verified on the blockchain.' },
+            { title: 'Instant Verification', desc: 'You just need a wallet address and a Phantom wallet to instantly buy or sell the token.' },
             { title: 'Real-Time Tracking', desc: 'Monitor your carbon footprint reduction in real-time.' },
             { title: 'Transparent Reporting', desc: 'Generate detailed reports for sustainability initiatives.' },
           ].map((item, index) => (
