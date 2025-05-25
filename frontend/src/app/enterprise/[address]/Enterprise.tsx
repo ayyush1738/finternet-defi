@@ -14,7 +14,20 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   const [royalties, setRoyalties] = useState('10');
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [organizationName, setOrganizationName] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+  const token = localStorage.getItem('jwt');
+  const org = localStorage.getItem('organizationName'); // ← get the org name
+  if (!token) {
+    alert('Unauthorized. Please login again.');
+    router.push('/');
+  }
+  if (org) {
+    setOrganizationName(org);
+  }
+}, [router]);
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
@@ -74,6 +87,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       formData.append('creator', walletAddress);
       formData.append('mint', mintKeypair.publicKey.toString());
       formData.append('name', name);
+      formData.append('organization', organizationName || '');
       formData.append('description', description);
       formData.append('royalties', royalties);
 

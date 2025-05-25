@@ -98,6 +98,7 @@ export default function Hero() {
 
         setStatus('Login successful');
         localStorage.setItem('jwt', data.token);
+        localStorage.setItem('organizationName', organizationName);
         setShowModal(false);
 
         router.push(`/enterprise/${walletAddress}`);

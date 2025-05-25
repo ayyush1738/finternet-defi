@@ -24,14 +24,17 @@ export const upload = async (req, res) => {
       creator: req.body.creator,
       mint: req.body.mint,
       name: req.body.name,
+      organizationName: req.body.organization,
       description: req.body.description,
       royalties: req.body.royalties || 10,
     });
 
+    console.log(req.body.organization)
+
     // 🗃️ Store invoice (without tx_sig yet)
     await db.query(
       "INSERT INTO invoices (username, cid, amount, creator, created_at) VALUES ($1, $2, $3, $4, NOW())",
-      [req.body.name, ocrResp.data.cid, req.body.amount, req.body.creator]
+      [req.body.organization, ocrResp.data.cid, req.body.amount, req.body.creator]
     );
 
     // 📨 Respond with transaction
