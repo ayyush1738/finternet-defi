@@ -1,5 +1,7 @@
 import axios from 'axios';
 import db from '../config/dbConnect.js';
+import { Connection, Transaction, PublicKey } from '@solana/web3.js';
+
 
 export const upload = async (req, res) => {
   try {
@@ -11,7 +13,6 @@ export const upload = async (req, res) => {
     // 🔍 OCR + IPFS upload
     const ocrResp = await axios.post('http://localhost:8001/analyze', { file_b64: fileB64 });
 
-    // 🧠 Risk score
     const riskResp = await axios.post('http://localhost:8002/score', { text: ocrResp.data.text });
 
     // 🧾 Create transaction via NFT minting service

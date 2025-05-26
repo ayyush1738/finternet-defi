@@ -11,6 +11,6 @@ const uploadMiddleware = multer();
 router.post('/upload', uploadMiddleware.single('file'), upload);
 router.post('/finalize', finalize);
 router.get('/list', getInvoices);
-router.get('/purchase', purchaseInvoice);
+router.post('/purchase', purchaseInvoice);
 
 export default router;

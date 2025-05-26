@@ -4,6 +4,8 @@ import { Connection, Transaction } from '@solana/web3.js';
 
 export default function Market() {
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -19,46 +21,53 @@ export default function Market() {
   }, []);
 
   const handlePurchase = async (inv: any) => {
-    const provider = (window as any).solana;
-    if (!provider || !provider.isPhantom) {
-      alert('Phantom Wallet not found');
-      return;
+  const provider = (window as any).solana;
+  if (!provider || !provider.isPhantom) {
+    alert('Phantom Wallet not found');
+    return;
+  }
+
+  await provider.connect();
+  const response = await provider.connect();
+  const address = response.publicKey.toString(); // ✅ use this
+
+  try {
+    const res = await fetch('http://localhost:8000/api/v1/invoice/purchase', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cid: inv.cid,
+        tx_sig: inv.tx_sig,
+        amount: inv.amount,
+        seller: inv.creator,
+        buyer: address, // ✅ fixed here
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Purchase failed');
     }
 
-    await provider.connect();
-    const buyerAddress = provider.publicKey.toString();
+    const { transaction_base64 } = await res.json();
 
-    try {
-      const res = await fetch('http://localhost:8000/api/v1/invoice/purchase', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cid: inv.cid,
-          tx_sig: inv.tx_sig,
-          amount: inv.amount,
-          seller: inv.creator,
-          buyer: buyerAddress,
-        }),
-      });
+    const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+    const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
 
-      const { transaction_base64 } = await res.json();
+    const signedTx = await provider.signTransaction(tx);
+    const txid = await connection.sendRawTransaction(signedTx.serialize());
+    await connection.confirmTransaction(txid, 'confirmed');
 
-      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-      const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
+    alert(`✅ Purchase Successful!\nTx: ${txid}`);
+    window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
+  } catch (err: any) {
+    console.error('Purchase failed', err);
+    alert('Purchase failed: ' + err.message);
+  }
+};
 
-      const signedTx = await provider.signTransaction(tx);
-      const txid = await connection.sendRawTransaction(signedTx.serialize());
-      await connection.confirmTransaction(txid, 'confirmed');
-
-      alert(`✅ Purchase Successful!\nTx: ${txid}`);
-      window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
-    } catch (err) {
-      console.error('Purchase failed', err);
-      alert('Purchase failed. See console for details.');
-    }
-  };
 
 
   return (
