@@ -6,13 +6,15 @@ import {
   PublicKey,
   Transaction,
   SystemProgram,
-  LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import {
   getMinimumBalanceForRentExemptMint,
   createInitializeMintInstruction,
   MINT_SIZE,
   TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+  createMintToInstruction,
 } from '@solana/spl-token';
 import {
   createCreateMetadataAccountV3Instruction,
@@ -70,7 +72,7 @@ app.post('/mint', async (req, res) => {
 
     const lamports = await getMinimumBalanceForRentExemptMint(connection);
 
-    // 🧾 Instructions to create and initialize mint account
+    // 🧾 Instructions
     const createMintAccountIx = SystemProgram.createAccount({
       fromPubkey: userPublicKey,
       newAccountPubkey: mintPublicKey,
@@ -81,12 +83,11 @@ app.post('/mint', async (req, res) => {
 
     const initMintIx = createInitializeMintInstruction(
       mintPublicKey,
-      0, // decimals
-      userPublicKey, // mint authority
-      userPublicKey // freeze authority
+      0,
+      userPublicKey,
+      userPublicKey
     );
 
-    // 🧠 Metadata instruction
     const metadataIx = createCreateMetadataAccountV3Instruction(
       {
         metadata: metadataPDA,
@@ -118,6 +119,26 @@ app.post('/mint', async (req, res) => {
       }
     );
 
+    // 💠 New: Mint to Creator ATA
+    const creatorATA = await getAssociatedTokenAddress(
+      mintPublicKey,
+      userPublicKey
+    );
+
+    const createATAIx = createAssociatedTokenAccountInstruction(
+      userPublicKey,  // payer
+      creatorATA,
+      userPublicKey,
+      mintPublicKey
+    );
+
+    const mintToIx = createMintToInstruction(
+      mintPublicKey,
+      creatorATA,
+      userPublicKey,
+      1
+    );
+
     const latestBlockhash = await connection.getLatestBlockhash();
 
     const transaction = new Transaction({
@@ -125,17 +146,17 @@ app.post('/mint', async (req, res) => {
       recentBlockhash: latestBlockhash.blockhash,
     });
 
-    // ⛓️ Order matters
     transaction.add(createMintAccountIx);
     transaction.add(initMintIx);
     transaction.add(metadataIx);
+    transaction.add(createATAIx);
+    transaction.add(mintToIx);
 
     const serialized = transaction.serialize({
-      requireAllSignatures: false, // Phantom will sign
+      requireAllSignatures: false,
     });
 
     const transaction_base64 = serialized.toString('base64');
-
     res.json({ transaction_base64 });
   } catch (err) {
     console.error('❌ Mint error:', err.stack || err.message);

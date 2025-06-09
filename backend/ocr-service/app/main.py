@@ -31,12 +31,10 @@ async def analyze(req: OCRRequest):
         if not text.strip():
             raise ValueError("OCR did not extract any text.")
 
-        # Save content as temp file for IPFS upload
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
             temp_pdf.write(content)
             temp_pdf_path = temp_pdf.name
 
-        # Upload to IPFS Desktop node
         with open(temp_pdf_path, 'rb') as f:
             response = requests.post('http://127.0.0.1:5001/api/v0/add', files={'file': f})
             response.raise_for_status()
@@ -44,7 +42,7 @@ async def analyze(req: OCRRequest):
             cid = ipfs_result['Hash']
             print("✅ Uploaded to IPFS:", cid)
 
-        os.remove(temp_pdf_path)  # Clean up temp file
+        os.remove(temp_pdf_path)  
 
         return {"text": text, "cid": cid}
 

@@ -22,11 +22,13 @@ const initDb = async () => {
 
       CREATE TABLE IF NOT EXISTS invoices (
           id SERIAL PRIMARY KEY,
-          username TEXT UNIQUE,
+          username TEXT,
           cid TEXT NOT NULL,
           tx_sig TEXT,
           amount NUMERIC NOT NULL,
           creator TEXT NOT NULL,
+          mint TEXT,
+          investor_pubkey TEXT,
           created_at TIMESTAMPTZ DEFAULT NOW()
       );
 

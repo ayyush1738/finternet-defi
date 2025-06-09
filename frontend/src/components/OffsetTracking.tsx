@@ -56,7 +56,7 @@ export default function OnDemandOffset() {
 
         <div className="space-y-6 mr-30">
           {[
-            { title: 'Instant Verification', desc: 'You just need a wallet address and a Phantom wallet to instantly buy or sell the token.' },
+            { title: 'Instant Verification', desc: 'You just need a Phantom wallet to instantly buy or sell the tokenized invoices.' },
             { title: 'Real-Time Tracking', desc: 'Monitor your carbon footprint reduction in real-time.' },
             { title: 'Transparent Reporting', desc: 'Generate detailed reports for sustainability initiatives.' },
           ].map((item, index) => (

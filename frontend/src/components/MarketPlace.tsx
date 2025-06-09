@@ -6,7 +6,6 @@ export default function Market() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
@@ -17,57 +16,78 @@ export default function Market() {
         console.error('Failed to load invoices', err);
       }
     };
+
+    const checkWallet = async () => {
+      const provider = (window as any).solana;
+      if (provider && provider.isPhantom) {
+        const resp = await provider.connect();
+        setWalletAddress(resp.publicKey.toString());
+      }
+    };
+
     fetchInvoices();
+    checkWallet();
   }, []);
 
   const handlePurchase = async (inv: any) => {
-  const provider = (window as any).solana;
-  if (!provider || !provider.isPhantom) {
-    alert('Phantom Wallet not found');
-    return;
-  }
-
-  await provider.connect();
-  const response = await provider.connect();
-  const address = response.publicKey.toString(); // ✅ use this
-
-  try {
-    const res = await fetch('http://localhost:8000/api/v1/invoice/purchase', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        cid: inv.cid,
-        tx_sig: inv.tx_sig,
-        amount: inv.amount,
-        seller: inv.creator,
-        buyer: address, // ✅ fixed here
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Purchase failed');
+    const provider = (window as any).solana;
+    if (!provider || !provider.isPhantom) {
+      alert('Phantom Wallet not found');
+      return;
     }
 
-    const { transaction_base64 } = await res.json();
+    const address = walletAddress;
+    if (!address) {
+      alert('Connect wallet first');
+      return;
+    }
 
-    const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-    const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
+    try {
+      // STEP 1: Create transfer tx
+      const res = await fetch('http://localhost:8000/api/v1/invoice/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cid: inv.cid,
+          tx_sig: inv.tx_sig,
+          amount: inv.amount,
+          seller: inv.creator,
+          buyer: address,
+        }),
+      });
 
-    const signedTx = await provider.signTransaction(tx);
-    const txid = await connection.sendRawTransaction(signedTx.serialize());
-    await connection.confirmTransaction(txid, 'confirmed');
+      if (!res.ok) throw new Error('Failed to create transaction');
 
-    alert(`✅ Purchase Successful!\nTx: ${txid}`);
-    window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
-  } catch (err: any) {
-    console.error('Purchase failed', err);
-    alert('Purchase failed: ' + err.message);
-  }
-};
+      const { transaction_base64 } = await res.json();
 
+      // STEP 2: Sign + send TX
+      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
+
+      const signedTx = await provider.signTransaction(tx);
+      const txid = await connection.sendRawTransaction(signedTx.serialize());
+      await connection.confirmTransaction(txid, 'confirmed');
+
+      // STEP 3: Confirm purchase to backend
+      await fetch('http://localhost:8000/api/v1/invoice/purchase/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cid: inv.cid,
+          tx_sig: txid,
+          seller: inv.creator,
+          buyer: address,
+        }),
+      });
+
+      alert(`Purchase Successful!\nTx: ${txid}`);
+      window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
+      window.location.reload();
+    } catch (err: any) {
+      console.error('Purchase failed', err);
+      alert('Purchase failed: ' + err.message);
+    }
+  };
 
 
   return (
@@ -81,47 +101,43 @@ export default function Market() {
               <th className="px-6 py-3">Date Uploaded</th>
               <th className="px-6 py-3">Owner</th>
               <th className="px-6 py-3">Amount</th>
-              <th className='px-6 py-3'>Profit</th>
+              <th className="px-6 py-3">Profit</th>
               <th className="px-6 py-3">Invoice</th>
               <th className="px-6 py-3">Tx</th>
               <th className="px-6 py-3">Purchase</th>
             </tr>
           </thead>
+          <tbody>
+            {invoices.map((inv) => (
+              <tr key={inv.id} className="hover:bg-gray-700/50 transition duration-200">
+                <td className="px-10 py-4 font-medium">INV-{inv.id}</td>
+                <td className="px-14 py-4">{new Date(inv.created_at).toLocaleDateString()}</td>
+                <td className="px-12 py-4">{inv.username}</td>
+                <td className="px-12 py-4">{inv.amount} SOL</td>
+                <td className="px-12 py-4">{/* Add profit display logic here if needed */}</td>
+                <td className="px-8 py-4">
+                  <a href={`https://ipfs.io/ipfs/${inv.cid}`} target="_blank" rel="noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                    View PDF
+                  </a>
+                </td>
+                <td className="px-8 py-4">
+                  <a href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-emerald-400 underline">
+                    View Tx
+                  </a>
+                </td>
+                <td className="px-8 py-4">
+                  <button
+                    onClick={() => handlePurchase(inv)}
+                    disabled={inv.investor_pubkey}
+                    className={`${inv.investor_pubkey ? 'bg-gray-500 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600'} text-white text-xs font-semibold px-3 py-1 rounded shadow`}
+                  >
+                    {inv.investor_pubkey ? 'Sold' : 'Buy'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
-        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-          <table className="min-w-full table-auto text-left text-sm text-gray-300">
-            <tbody>
-              {invoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-gray-700/50 transition duration-200">
-                  <td className="px-10 py-4 font-medium">INV-{inv.id}</td>
-                  <td className="px-14 py-4">{new Date(inv.created_at).toLocaleDateString()}</td>
-                  <td className="px-12 py-4">{inv.username}</td>
-                  <td className="px-12 py-4">{inv.amount} SOL</td>
-                  <td className="px-12 py-4"></td>
-                  <td className="px-8 py-4">
-                    <a href={`https://ipfs.io/ipfs/${inv.cid}`} target="_blank" rel="noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow">
-                      View PDF
-                    </a>
-                  </td>
-                  <td className="px-8 py-4">
-                    <a href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-emerald-400 underline">
-                      View Tx
-                    </a>
-                  </td>
-                  <td className="px-8 py-4">
-                    <button
-                      onClick={() => handlePurchase(inv)}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded shadow"
-                    >
-                      Buy
-                    </button>
-                  </td>
-
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );
