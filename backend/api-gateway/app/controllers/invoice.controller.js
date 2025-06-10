@@ -99,9 +99,9 @@ export const purchaseInvoice = async (req, res) => {
 
 export const confirmPurchase = async (req, res) => {
   try {
-    const { cid, seller, buyer, tx_sig } = req.body;
+    const { cid, seller, buyer, tx_sig, organization, amount, mint } = req.body;
 
-    if (!cid || !seller || !buyer || !tx_sig) {
+    if (!cid || !seller || !buyer || !tx_sig || !organization || !amount) {
       return res.status(400).json({ message: 'Missing confirmation fields' });
     }
 
@@ -112,9 +112,35 @@ export const confirmPurchase = async (req, res) => {
       [buyer, tx_sig, cid, seller]
     );
 
+    await db.query(
+      `INSERT INTO investors (cid, investor_pubkey, amount, creator, mint, organization, tx_sig)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [cid, buyer, amount, seller, mint, organization, tx_sig]
+    );
+
     res.json({ message: 'Purchase recorded' });
   } catch (err) {
     console.error('❌ Confirmation error:', err);
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const getMyPurchases = async (req, res) => {
+  const { buyer } = req.query;
+  if (!buyer) return res.status(400).json({ message: 'Buyer address required' });
+
+  try {
+    const result = await db.query(
+      `SELECT id, username, cid, amount, tx_sig, created_at 
+       FROM invoices 
+       WHERE investor_pubkey = $1 
+       ORDER BY created_at DESC`,
+      [buyer]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Failed to fetch purchases:', err);
+    res.status(500).json({ message: 'Failed to fetch purchases' });
   }
 };

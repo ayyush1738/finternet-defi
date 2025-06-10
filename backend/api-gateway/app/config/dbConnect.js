@@ -12,27 +12,27 @@ const initDb = async () => {
     console.log('✅ Connected to the PostgreSQL database.');
 
     const createTables = `
-      CREATE TABLE IF NOT EXISTS users (
-          id SERIAL PRIMARY KEY,
-          username TEXT UNIQUE,
-          email TEXT UNIQUE,
-          wallet_address TEXT UNIQUE NOT NULL,
-          role TEXT CHECK(role IN ('investor', 'enterprise')) NOT NULL DEFAULT 'investor'
-      );
+  CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username TEXT UNIQUE,
+      email TEXT UNIQUE,
+      wallet_address TEXT UNIQUE NOT NULL,
+      role TEXT CHECK(role IN ('investor', 'enterprise')) NOT NULL DEFAULT 'investor'
+  );
 
-      CREATE TABLE IF NOT EXISTS invoices (
-          id SERIAL PRIMARY KEY,
-          username TEXT,
-          cid TEXT NOT NULL,
-          tx_sig TEXT,
-          amount NUMERIC NOT NULL,
-          creator TEXT NOT NULL,
-          mint TEXT,
-          investor_pubkey TEXT,
-          created_at TIMESTAMPTZ DEFAULT NOW()
-      );
+  CREATE TABLE IF NOT EXISTS invoices (
+      id SERIAL PRIMARY KEY,
+      username TEXT,
+      cid TEXT NOT NULL,
+      tx_sig TEXT,
+      amount NUMERIC NOT NULL,
+      creator TEXT NOT NULL,
+      mint TEXT,
+      investor_pubkey TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+`;
 
-    `;
 
     await client.query(createTables);
     client.release();
