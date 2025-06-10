@@ -238,14 +238,11 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
             </div>
 
             <div>
-              <label className="block mb-1 text-sm">Royalties (%)</label>
+              <label className="block mb-1 text-sm">Customer Name</label>
               <input
-                type="number"
+                type="text"
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
-                value={royalties}
-                onChange={(e) => setRoyalties(e.target.value)}
-                min="0"
-                max="50"
+                placeholder="Enter Name of Your Client"
               />
             </div>
           </div>
