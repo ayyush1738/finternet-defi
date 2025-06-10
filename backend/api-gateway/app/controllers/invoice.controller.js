@@ -112,12 +112,6 @@ export const confirmPurchase = async (req, res) => {
       [buyer, tx_sig, cid, seller]
     );
 
-    await db.query(
-      `INSERT INTO investors (cid, investor_pubkey, amount, creator, mint, organization, tx_sig)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [cid, buyer, amount, seller, mint, organization, tx_sig]
-    );
-
     res.json({ message: 'Purchase recorded' });
   } catch (err) {
     console.error('❌ Confirmation error:', err);
@@ -144,3 +138,38 @@ export const getMyPurchases = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch purchases' });
   }
 };
+
+export const getPendingPayments = async (req, res) => {
+  const { cName } = req.body;
+
+  if (!cName) {
+    return res.status(400).json({ message: 'Customer name is required' });
+  }
+
+  try {
+    // Step 1: Check if user exists
+    const userResult = await db.query(
+      'SELECT * FROM users WHERE username = $1',
+      [cName]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Customer not found in user database' });
+    }
+
+    // Step 2: Fetch pending invoices for this user
+    const invoiceResult = await db.query(
+      `SELECT id, username, cid, amount, creator, mint, created_at 
+       FROM invoices 
+       WHERE username = $1 AND tx_sig IS NULL
+       ORDER BY created_at DESC`,
+      [cName]
+    );
+
+    res.json({ pendingPayments: invoiceResult.rows });
+  } catch (err) {
+    console.error('❌ Error fetching pending payments:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+

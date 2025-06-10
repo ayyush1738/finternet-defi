@@ -10,8 +10,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   const [fileName, setFileName] = useState<string | null>(null);
   const [price, setPrice] = useState('');
   const [name, setName] = useState('');
+  const [cName, setcName] = useState('');
   const [description, setDescription] = useState('');
-  const [royalties, setRoyalties] = useState('10');
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [organizationName, setOrganizationName] = useState<string | null>(null);
@@ -89,7 +89,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       formData.append('name', name);
       formData.append('organization', organizationName || '');
       formData.append('description', description);
-      formData.append('royalties', royalties);
+      formData.append('Customer_Name', cName);
+
 
       const token = localStorage.getItem('jwt');
       const uploadRes = await fetch('http://localhost:8000/api/v1/invoice/upload', {
@@ -243,6 +244,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
                 type="text"
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
                 placeholder="Enter Name of Your Client"
+                value={cName}
+                onChange={(e) => setcName(e.target.value)}
               />
             </div>
           </div>
