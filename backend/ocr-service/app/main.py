@@ -8,12 +8,38 @@ import traceback
 import requests
 import tempfile
 import os
+import re
 
 logging.basicConfig(level=logging.INFO)
 app = FastAPI()
 
 class OCRRequest(BaseModel):
     file_b64: str
+
+TOTAL_KEYWORDS = [
+    "total due", "total amount", "net amount", "amount payable",
+    "invoice total", "total sum", "balance due", "total to pay",
+    "grand total", "amount to pay"
+]
+
+def extract_likely_total(text: str) -> str:
+    candidates = []
+
+    for line in text.splitlines():
+        lower_line = line.lower()
+        for keyword in TOTAL_KEYWORDS:
+            if keyword in lower_line:
+                # Extract currency-style numbers (e.g., 6,610.95)
+                matches = re.findall(r"([\d,]+\.\d{2})", line)
+                for amt in matches:
+                    try:
+                        candidates.append(float(amt.replace(",", "")))
+                    except:
+                        continue
+
+    if candidates:
+        return f"{max(candidates):.2f}"
+    return "Not Found"
 
 @app.post("/analyze")
 async def analyze(req: OCRRequest):
@@ -31,6 +57,10 @@ async def analyze(req: OCRRequest):
         if not text.strip():
             raise ValueError("OCR did not extract any text.")
 
+        # Extract total amount from text
+        total_amount = extract_likely_total(text)
+
+        # Save PDF and upload to IPFS
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
             temp_pdf.write(content)
             temp_pdf_path = temp_pdf.name
@@ -42,9 +72,13 @@ async def analyze(req: OCRRequest):
             cid = ipfs_result['Hash']
             print("✅ Uploaded to IPFS:", cid)
 
-        os.remove(temp_pdf_path)  
+        os.remove(temp_pdf_path)
 
-        return {"text": text, "cid": cid}
+        return {
+            "text": text,
+            "total_detected": total_amount,
+            "cid": cid
+        }
 
     except HTTPException as he:
         raise he

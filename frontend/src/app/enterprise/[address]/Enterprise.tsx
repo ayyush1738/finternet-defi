@@ -10,7 +10,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   const [fileName, setFileName] = useState<string | null>(null);
   const [price, setPrice] = useState('');
   const [name, setName] = useState('');
-  const [cName, setcName] = useState('');
+  const [pubKey, setPubKey] = useState('');
   const [description, setDescription] = useState('');
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -18,16 +18,16 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   const router = useRouter();
 
   useEffect(() => {
-  const token = localStorage.getItem('jwt');
-  const org = localStorage.getItem('organizationName'); // ← get the org name
-  if (!token) {
-    alert('Unauthorized. Please login again.');
-    router.push('/');
-  }
-  if (org) {
-    setOrganizationName(org);
-  }
-}, [router]);
+    const token = localStorage.getItem('jwt');
+    const org = localStorage.getItem('organizationName'); // ← get the org name
+    if (!token) {
+      alert('Unauthorized. Please login again.');
+      router.push('/');
+    }
+    if (org) {
+      setOrganizationName(org);
+    }
+  }, [router]);
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
@@ -89,7 +89,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       formData.append('name', name);
       formData.append('organization', organizationName || '');
       formData.append('description', description);
-      formData.append('Customer_Name', cName);
+      formData.append('customer_pubkey', pubKey);
 
 
       const token = localStorage.getItem('jwt');
@@ -100,6 +100,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
         },
         body: formData,
       });
+
+
 
       if (!uploadRes.ok) {
         const err = await uploadRes.json();
@@ -136,6 +138,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
           amount: price,
         }),
       });
+
 
       alert(`✅ NFT Minted Successfully!\nTxID: ${txid}\nIPFS: https://ipfs.io/ipfs/${ipfs_cid}`);
       window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
@@ -244,8 +247,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
                 type="text"
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
                 placeholder="Enter Name of Your Client"
-                value={cName}
-                onChange={(e) => setcName(e.target.value)}
+                value={pubKey}
+                onChange={(e) => setPubKey(e.target.value)}
               />
             </div>
           </div>

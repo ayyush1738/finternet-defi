@@ -22,20 +22,21 @@ export const upload = async (req, res) => {
       due_ts: req.body.due_ts,
       risk: riskResp.data.risk,
       cid: ocrResp.data.cid,
+      inv_amount: ocrResp.data.total_amount,
       creator: req.body.creator,
       mint: req.body.mint,
       name: req.body.name,
       organizationName: req.body.organization,
       description: req.body.description,
-      royalties: req.body.royalties || 10,
+      customer_pubkey: req.body.customer_pubkey,
     });
 
     console.log(req.body.organization)
 
     // 🗃️ Store invoice (without tx_sig yet)
     await db.query(
-      "INSERT INTO invoices (username, cid, amount, creator, mint, created_at) VALUES ($1, $2, $3, $4, $5, NOW())",
-      [req.body.organization, ocrResp.data.cid, req.body.amount, req.body.creator, req.body.mint]
+      "INSERT INTO invoices (username, cid, amount, inv_amount, creator, mint, customer_pubkey, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())",
+      [req.body.organization, ocrResp.data.cid, req.body.amount, ocrResp.data.total_amount, req.body.creator, req.body.mint, req.body.customer_pubkey]
     );
 
 
@@ -99,9 +100,9 @@ export const purchaseInvoice = async (req, res) => {
 
 export const confirmPurchase = async (req, res) => {
   try {
-    const { cid, seller, buyer, tx_sig, organization, amount, mint } = req.body;
+    const { cid, seller, buyer, tx_sig } = req.body;
 
-    if (!cid || !seller || !buyer || !tx_sig || !organization || !amount) {
+    if (!cid || !seller || !buyer || !tx_sig ) {
       return res.status(400).json({ message: 'Missing confirmation fields' });
     }
 
@@ -140,17 +141,17 @@ export const getMyPurchases = async (req, res) => {
 };
 
 export const getPendingPayments = async (req, res) => {
-  const { cName } = req.body;
+  const { customer } = req.query;
 
-  if (!cName) {
+  if (!customer) {
     return res.status(400).json({ message: 'Customer name is required' });
   }
 
   try {
     // Step 1: Check if user exists
     const userResult = await db.query(
-      'SELECT * FROM users WHERE username = $1',
-      [cName]
+      'SELECT * FROM invoices WHERE customer_pubkey = $1',
+      [customer]
     );
 
     if (userResult.rows.length === 0) {
@@ -159,11 +160,9 @@ export const getPendingPayments = async (req, res) => {
 
     // Step 2: Fetch pending invoices for this user
     const invoiceResult = await db.query(
-      `SELECT id, username, cid, amount, creator, mint, created_at 
+      `SELECT id, username, amount, created_at 
        FROM invoices 
-       WHERE username = $1 AND tx_sig IS NULL
-       ORDER BY created_at DESC`,
-      [cName]
+       ORDER BY created_at DESC`
     );
 
     res.json({ pendingPayments: invoiceResult.rows });

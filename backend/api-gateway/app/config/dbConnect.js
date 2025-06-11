@@ -15,7 +15,6 @@ const initDb = async () => {
   CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       username TEXT UNIQUE,
-      email TEXT UNIQUE,
       wallet_address TEXT UNIQUE NOT NULL,
       role TEXT CHECK(role IN ('investor', 'enterprise')) NOT NULL DEFAULT 'investor'
   );
@@ -26,9 +25,11 @@ const initDb = async () => {
       cid TEXT NOT NULL,
       tx_sig TEXT,
       amount NUMERIC NOT NULL,
+      inv_amount NUMERIC,
       creator TEXT NOT NULL,
       mint TEXT,
       investor_pubkey TEXT,
+      customer_pubkey TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
   );
 `;
