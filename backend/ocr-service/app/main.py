@@ -27,19 +27,34 @@ def extract_likely_total(text: str) -> str:
 
     for line in text.splitlines():
         lower_line = line.lower()
-        for keyword in TOTAL_KEYWORDS:
-            if keyword in lower_line:
-                # Extract currency-style numbers (e.g., 6,610.95)
-                matches = re.findall(r"([\d,]+\.\d{2})", line)
-                for amt in matches:
-                    try:
-                        candidates.append(float(amt.replace(",", "")))
-                    except:
-                        continue
+        # Look for "total" variants manually
+        if "total" in lower_line or any(k in lower_line for k in TOTAL_KEYWORDS):
+            print(f"🔍 Matched line: {line}")
+            # Try to match INR, Rs., ₹, or plain float
+            matches = re.findall(r"(?:rs\.?|inr|₹|$)?\s*([\d,]+\.\d{2})", lower_line)
+            for amt in matches:
+                try:
+                    candidates.append(float(amt.replace(",", "")))
+                except:
+                    continue
+
+    if not candidates:
+        # Fallback: try getting the largest float-like value in entire doc
+        matches = re.findall(r"([\d,]+\.\d{2})", text)
+        for amt in matches:
+            try:
+                candidates.append(float(amt.replace(",", "")))
+            except:
+                continue
 
     if candidates:
-        return f"{max(candidates):.2f}"
+        max_val = max(candidates)
+        print(f"✅ Candidates: {candidates}, Max: {max_val}")
+        return f"{max_val:.2f}"
+
     return "Not Found"
+
+
 
 @app.post("/analyze")
 async def analyze(req: OCRRequest):
@@ -73,6 +88,7 @@ async def analyze(req: OCRRequest):
             print("✅ Uploaded to IPFS:", cid)
 
         os.remove(temp_pdf_path)
+        
 
         return {
             "text": text,
