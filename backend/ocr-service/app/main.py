@@ -92,7 +92,7 @@ async def analyze(req: OCRRequest):
 
         return {
             "text": text,
-            "total_detected": total_amount,
+            "total_amount": total_amount,
             "cid": cid
         }
 
