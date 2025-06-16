@@ -5,6 +5,7 @@ import { Connection, Transaction } from '@solana/web3.js';
 export default function Market() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [solPrice, setSolPrice] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -25,8 +26,20 @@ export default function Market() {
       }
     };
 
+    const fetchSolPrice = async () => {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const data = await res.json();
+        setSolPrice(data.solana.usd);
+        console.log(solPrice);
+      } catch (err) {
+        console.error('Failed to fetch SOL price:', err);
+      }
+    };
+
     fetchInvoices();
     checkWallet();
+    fetchSolPrice();
   }, []);
 
   const handlePurchase = async (inv: any) => {
@@ -43,7 +56,6 @@ export default function Market() {
     }
 
     try {
-      // STEP 1: Create transfer tx
       const res = await fetch('http://localhost:8000/api/v1/invoice/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,6 +63,7 @@ export default function Market() {
           cid: inv.cid,
           tx_sig: inv.tx_sig,
           amount: inv.amount,
+          inv_amount: inv.inv_amount,
           seller: inv.creator,
           buyer: address,
         }),
@@ -60,7 +73,6 @@ export default function Market() {
 
       const { transaction_base64 } = await res.json();
 
-      // STEP 2: Sign + send TX
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
 
@@ -68,7 +80,6 @@ export default function Market() {
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      // STEP 3: Confirm purchase to backend
       await fetch('http://localhost:8000/api/v1/invoice/purchase/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,7 +99,6 @@ export default function Market() {
       alert('Purchase failed: ' + err.message);
     }
   };
-
 
   return (
     <div className="p-20 text-white h-auto" style={{ background: 'linear-gradient(to bottom, #020009, #1f2937, #7c3aed)' }}>
@@ -114,14 +124,28 @@ export default function Market() {
                 <td className="px-14 py-4">{new Date(inv.created_at).toLocaleDateString()}</td>
                 <td className="px-12 py-4">{inv.username}</td>
                 <td className="px-12 py-4">{inv.amount} SOL</td>
-                <td className="px-12 py-4">{/* Add profit display logic here if needed */}</td>
+                <td className="px-12 py-4">
+                  {inv.inv_amount && solPrice
+                    ? `${((inv.inv_amount / solPrice) - inv.amount).toFixed(4)} SOL`
+                    : '...'}
+                </td>
                 <td className="px-8 py-4">
-                  <a href={`https://ipfs.io/ipfs/${inv.cid}`} target="_blank" rel="noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                  <a
+                    href={`https://ipfs.io/ipfs/${inv.cid}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow"
+                  >
                     View PDF
                   </a>
                 </td>
                 <td className="px-8 py-4">
-                  <a href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-emerald-400 underline">
+                  <a
+                    href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-emerald-400 underline"
+                  >
                     View Tx
                   </a>
                 </td>
@@ -129,7 +153,11 @@ export default function Market() {
                   <button
                     onClick={() => handlePurchase(inv)}
                     disabled={inv.investor_pubkey}
-                    className={`${inv.investor_pubkey ? 'bg-gray-500 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600'} text-white text-xs font-semibold px-3 py-1 rounded shadow`}
+                    className={`${
+                      inv.investor_pubkey
+                        ? 'bg-gray-500 cursor-not-allowed'
+                        : 'bg-emerald-500 hover:bg-emerald-600'
+                    } text-white text-xs font-semibold px-3 py-1 rounded shadow`}
                   >
                     {inv.investor_pubkey ? 'Sold' : 'Buy'}
                   </button>

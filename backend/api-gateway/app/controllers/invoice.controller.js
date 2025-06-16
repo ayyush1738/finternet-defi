@@ -54,7 +54,7 @@ export const upload = async (req, res) => {
 export const getInvoices = async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT id, username, cid, tx_sig, amount, creator, mint, investor_pubkey, created_at 
+      `SELECT id, username, cid, tx_sig, amount, inv_amount, creator, mint, investor_pubkey, created_at 
        FROM invoices ORDER BY created_at DESC;`
     );
     res.json(result.rows);
@@ -160,7 +160,7 @@ export const getPendingPayments = async (req, res) => {
 
     // Step 2: Fetch pending invoices for this user
     const invoiceResult = await db.query(
-      `SELECT id, username, amount, created_at 
+      `SELECT id, username, inv_amount, created_at 
        FROM invoices 
        ORDER BY created_at DESC`
     );
