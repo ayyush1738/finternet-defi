@@ -63,7 +63,6 @@ export default function Market() {
           cid: inv.cid,
           tx_sig: inv.tx_sig,
           amount: inv.amount,
-          inv_amount: inv.inv_amount,
           seller: inv.creator,
           buyer: address,
         }),

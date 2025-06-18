@@ -6,6 +6,7 @@ export default function PendingPayments() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [solPrice, setSolPrice] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -35,7 +36,20 @@ export default function PendingPayments() {
       }
     };
 
+    const fetchSolPrice = async () => {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const data = await res.json();
+        setSolPrice(data.solana.usd);
+        console.log(solPrice);
+      } catch (err) {
+        console.error('Failed to fetch SOL price:', err);
+      }
+    };
+
     fetchPayments();
+    fetchSolPrice();
+
   }, []);
 
   return (
@@ -68,7 +82,9 @@ export default function PendingPayments() {
                   <td className="px-6 py-4 font-medium">INV-{payment.id}</td>
                   <td className="px-6 py-4">{new Date(payment.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4">{payment.username}</td>
-                  <td className="px-6 py-4">{parseFloat(payment.amount).toFixed(2)} SOL</td>
+                  <td className="px-6 py-4">{payment.inv_amount && solPrice
+                    ? `${((payment.inv_amount / solPrice)).toFixed(4)} SOL`
+                    : '...'}</td>
                   <td className="px-6 py-4">
                     <span className="inline-block bg-yellow-500/20 text-yellow-400 px-3 py-1 text-xs font-semibold rounded-full">
                       Pending
