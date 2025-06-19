@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Connection, Transaction } from '@solana/web3.js';
 
 export default function PendingPayments() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -21,7 +22,6 @@ export default function PendingPayments() {
         const response = await wallet.connect();
         const walletAddress = response.publicKey.toString();
 
-        // Replace `buyer` with `creator` or any correct query param if needed
         const res = await fetch(`http://localhost:8000/api/v1/invoice/pending?customer=${walletAddress}`);
         const data = await res.json();
 
@@ -41,7 +41,6 @@ export default function PendingPayments() {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
         const data = await res.json();
         setSolPrice(data.solana.usd);
-        console.log(solPrice);
       } catch (err) {
         console.error('Failed to fetch SOL price:', err);
       }
@@ -49,8 +48,38 @@ export default function PendingPayments() {
 
     fetchPayments();
     fetchSolPrice();
-
   }, []);
+
+  const handleSmartPayment = async (cid: string) => {
+    try {
+      const wallet = (window as any).solana;
+      const addr = wallet.publicKey.toString();
+
+      const res = await fetch('http://localhost:8000/api/v1/invoice/pay/contract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cid, customer: addr }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Failed to prepare payment transaction');
+      }
+
+      const { transaction_base64 } = await res.json();
+      const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
+
+      const signed = await wallet.signTransaction(tx);
+      const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
+      const txid = await conn.sendRawTransaction(signed.serialize());
+      await conn.confirmTransaction(txid, 'confirmed');
+
+      alert(`Payment successful! Transaction: ${txid}`);
+    } catch (err: any) {
+      console.error(err);
+      alert('Payment failed: ' + err.message);
+    }
+  };
 
   return (
     <div className="p-6 w-full">
@@ -82,16 +111,21 @@ export default function PendingPayments() {
                   <td className="px-6 py-4 font-medium">INV-{payment.id}</td>
                   <td className="px-6 py-4">{new Date(payment.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4">{payment.username}</td>
-                  <td className="px-6 py-4">{payment.inv_amount && solPrice
-                    ? `${((payment.inv_amount / solPrice)).toFixed(4)} SOL`
-                    : '...'}</td>
+                  <td className="px-6 py-4">
+                    {payment.inv_amount && solPrice
+                      ? `${(payment.inv_amount / solPrice).toFixed(4)} SOL`
+                      : '...'}
+                  </td>
                   <td className="px-6 py-4">
                     <span className="inline-block bg-yellow-500/20 text-yellow-400 px-3 py-1 text-xs font-semibold rounded-full">
                       Pending
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <button className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow">
+                    <button
+                      onClick={() => handleSmartPayment(payment.cid)}
+                      className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow"
+                    >
                       Pay Now
                     </button>
                   </td>

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import db from '../config/dbConnect.js';
+import { getProvider, getProgram } from '../config/anchorSetup.js';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 
@@ -33,14 +34,12 @@ export const upload = async (req, res) => {
 
     console.log(req.body.organization)
 
-    // 🗃️ Store invoice (without tx_sig yet)
     await db.query(
       "INSERT INTO invoices (username, cid, amount, inv_amount, creator, mint, customer_pubkey, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())",
       [req.body.organization, ocrResp.data.cid, req.body.amount, ocrResp.data.total_amount, req.body.creator, req.body.mint, req.body.customer_pubkey]
     );
 
 
-    // 📨 Respond with transaction
     res.json({
       ipfs_cid: ocrResp.data.cid,
       transaction_base64: web3Resp.data.transaction_base64,
@@ -171,4 +170,60 @@ export const getPendingPayments = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
+export const payInvoiceViaContract = async (req, res) => {
+  try {
+    const { id, customer } = req.body;
+
+    if (!id || !customer) {
+      return res.status(400).json({ message: 'Missing CID or Customer' });
+    }
+
+    // Step 1: Fetch invoice info from DB
+    const result = await db.query(
+      `SELECT inv_amount, investor_pubkey FROM invoices WHERE id = $1 AND customer_pubkey = $2`,
+      [id, customer]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Invoice not found or access denied' });
+    }
+
+    const { inv_amount, investor_pubkey } = result.rows[0];
+    const lamports = Math.floor(parseFloat(inv_amount) * 1e9);
+
+    // Step 2: Load Anchor Program
+    const provider = getProvider(customer);
+    const program = getProgram(provider);
+
+    // Step 3: Derive Invoice PDA
+    const [invoicePda] = await PublicKey.findProgramAddress(
+      [Buffer.from("invoice"), Buffer.from(cid)],
+      program.programId
+    );
+
+    // Step 4: Build the transaction
+    const tx = await program.methods
+      .payInvoice(cid, lamports)
+      .accounts({
+        customer: new PublicKey(customer),
+        investor: new PublicKey(investor_pubkey),
+        invoice: invoicePda,
+        systemProgram: PublicKey.default,
+      })
+      .transaction();
+
+    tx.feePayer = new PublicKey(customer);
+    tx.recentBlockhash = (await provider.connection.getLatestBlockhash()).blockhash;
+
+    const txBase64 = tx.serialize({ requireAllSignatures: false }).toString('base64');
+    return res.json({ transaction_base64: txBase64 });
+
+  } catch (err) {
+    console.error('❌ payInvoiceViaContract error:', err);
+    return res.status(500).json({ message: 'Smart contract payment error' });
+  }
+};
+
 
