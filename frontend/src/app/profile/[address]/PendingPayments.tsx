@@ -50,7 +50,7 @@ export default function PendingPayments() {
     fetchSolPrice();
   }, []);
 
-  const handleSmartPayment = async (cid: string) => {
+  const handleSmartPayment = async (id: number) => {
     try {
       const wallet = (window as any).solana;
       const addr = wallet.publicKey.toString();
@@ -58,7 +58,7 @@ export default function PendingPayments() {
       const res = await fetch('http://localhost:8000/api/v1/invoice/pay/contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cid, customer: addr }),
+        body: JSON.stringify({ id, customer: addr }),
       });
 
       if (!res.ok) {
@@ -123,7 +123,7 @@ export default function PendingPayments() {
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => handleSmartPayment(payment.cid)}
+                      onClick={() => handleSmartPayment(payment.id)}
                       className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow"
                     >
                       Pay Now

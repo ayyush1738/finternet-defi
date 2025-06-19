@@ -2,6 +2,7 @@ import axios from 'axios';
 import db from '../config/dbConnect.js';
 import { getProvider, getProgram } from '../config/anchorSetup.js';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import BN from 'bn.js';
 
 
 export const upload = async (req, res) => {
@@ -177,7 +178,7 @@ export const payInvoiceViaContract = async (req, res) => {
     const { id, customer } = req.body;
 
     if (!id || !customer) {
-      return res.status(400).json({ message: 'Missing CID or Customer' });
+      return res.status(400).json({ message: 'Missing ID or Customer' });
     }
 
     // Step 1: Fetch invoice info from DB
@@ -191,7 +192,7 @@ export const payInvoiceViaContract = async (req, res) => {
     }
 
     const { inv_amount, investor_pubkey } = result.rows[0];
-    const lamports = Math.floor(parseFloat(inv_amount) * 1e9);
+    const lamports = Math.floor(parseFloat(inv_amount) * 1e9); // convert to lamports
 
     // Step 2: Load Anchor Program
     const provider = getProvider(customer);
@@ -199,13 +200,13 @@ export const payInvoiceViaContract = async (req, res) => {
 
     // Step 3: Derive Invoice PDA
     const [invoicePda] = await PublicKey.findProgramAddress(
-      [Buffer.from("invoice"), Buffer.from(cid)],
+      [Buffer.from("invoice"), Buffer.from(id.toString())],  // ✅ fix: id must be a string here
       program.programId
     );
 
     // Step 4: Build the transaction
     const tx = await program.methods
-      .payInvoice(cid, lamports)
+      .payInvoice(new BN(id), new BN(lamports))  // ✅ fix: both must be BN
       .accounts({
         customer: new PublicKey(customer),
         investor: new PublicKey(investor_pubkey),
@@ -225,5 +226,3 @@ export const payInvoiceViaContract = async (req, res) => {
     return res.status(500).json({ message: 'Smart contract payment error' });
   }
 };
-
-

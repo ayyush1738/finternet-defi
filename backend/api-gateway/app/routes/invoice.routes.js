@@ -18,6 +18,6 @@ router.post('/purchase', purchaseInvoice);
 router.post('/purchase/confirm', confirmPurchase);
 router.get('/myPurchases', getMyPurchases);
 router.get('/pending', getPendingPayments);
-router.get('/pay/contract', payInvoiceViaContract);
+router.post('/pay/contract', payInvoiceViaContract);
 
 export default router;
