@@ -1,8 +1,8 @@
 import axios from 'axios';
 import db from '../config/dbConnect.js';
-import { getProvider, getProgram } from '../config/anchorSetup.js';
+// import { getProvider, getProgram } from '../config/anchorSetup.js';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import BN from 'bn.js';
+// import BN from 'bn.js';
 
 
 export const upload = async (req, res) => {
@@ -102,7 +102,7 @@ export const confirmPurchase = async (req, res) => {
   try {
     const { cid, seller, buyer, tx_sig } = req.body;
 
-    if (!cid || !seller || !buyer || !tx_sig ) {
+    if (!cid || !seller || !buyer || !tx_sig) {
       return res.status(400).json({ message: 'Missing confirmation fields' });
     }
 
@@ -160,7 +160,7 @@ export const getPendingPayments = async (req, res) => {
 
     // Step 2: Fetch pending invoices for this user
     const invoiceResult = await db.query(
-      `SELECT id, username, inv_amount, created_at 
+      `SELECT id, username, cid, inv_amount, created_at 
        FROM invoices 
        ORDER BY created_at DESC`
     );
@@ -173,56 +173,61 @@ export const getPendingPayments = async (req, res) => {
 };
 
 
-export const payInvoiceViaContract = async (req, res) => {
+export const payInvoice = async (req, res) => {
   try {
-    const { id, customer } = req.body;
+    const { cid, customer, solPrice } = req.body;
 
-    if (!id || !customer) {
-      return res.status(400).json({ message: 'Missing ID or Customer' });
+    if (!cid || !customer || !solPrice) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Step 1: Fetch invoice info from DB
     const result = await db.query(
-      `SELECT inv_amount, investor_pubkey FROM invoices WHERE id = $1 AND customer_pubkey = $2`,
-      [id, customer]
+      `SELECT inv_amount, investor_pubkey, customer_pubkey FROM invoices WHERE cid = $1`,
+      [cid]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Invoice not found or access denied' });
+      return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    const { inv_amount, investor_pubkey } = result.rows[0];
-    const lamports = Math.floor(parseFloat(inv_amount) * 1e9); // convert to lamports
+    const { inv_amount, investor_pubkey, customer_pubkey } = result.rows[0];
 
-    // Step 2: Load Anchor Program
-    const provider = getProvider(customer);
-    const program = getProgram(provider);
+    if (customer_pubkey !== customer) {
+      return res.status(400).json({ message: 'Unauthorized: wallet mismatch' });
+    }
 
-    // Step 3: Derive Invoice PDA
-    const [invoicePda] = await PublicKey.findProgramAddress(
-      [Buffer.from("invoice"), Buffer.from(id.toString())],  // ✅ fix: id must be a string here
-      program.programId
+    const amountInSol = inv_amount / solPrice;
+    const lamports = Math.floor(amountInSol * LAMPORTS_PER_SOL);
+
+    const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+    const fromPub = new PublicKey(customer);
+    const toPub = new PublicKey(investor_pubkey);
+    const latestBlockhash = await connection.getLatestBlockhash();
+
+    const tx = new Transaction({
+      feePayer: fromPub,
+      recentBlockhash: latestBlockhash.blockhash,
+    }).add(
+      SystemProgram.transfer({
+        fromPubkey: fromPub,
+        toPubkey: toPub,
+        lamports,
+      })
     );
 
-    // Step 4: Build the transaction
-    const tx = await program.methods
-      .payInvoice(new BN(id), new BN(lamports))  // ✅ fix: both must be BN
-      .accounts({
-        customer: new PublicKey(customer),
-        investor: new PublicKey(investor_pubkey),
-        invoice: invoicePda,
-        systemProgram: PublicKey.default,
-      })
-      .transaction();
-
-    tx.feePayer = new PublicKey(customer);
-    tx.recentBlockhash = (await provider.connection.getLatestBlockhash()).blockhash;
-
-    const txBase64 = tx.serialize({ requireAllSignatures: false }).toString('base64');
-    return res.json({ transaction_base64: txBase64 });
+    const serializedTx = tx.serialize({ requireAllSignatures: false }).toString('base64');
+    res.json({ transaction_base64: serializedTx });
 
   } catch (err) {
-    console.error('❌ payInvoiceViaContract error:', err);
-    return res.status(500).json({ message: 'Smart contract payment error' });
+    console.error('❌ Payment error:', err);
+    res.status(500).json({ message: err.message });
   }
+};
+
+export const confirmInvoicePayment = async (req, res) => {
+  const { cid } = req.body;
+  if (!cid) return res.status(400).json({ message: 'Missing CID' });
+
+  paidCids.add(cid);
+  res.json({ message: 'Marked as paid in-memory' });
 };

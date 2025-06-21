@@ -6,7 +6,8 @@ import { purchaseInvoice } from '../controllers/invoice.controller.js';
 import { confirmPurchase } from '../controllers/invoice.controller.js';
 import { getMyPurchases } from '../controllers/invoice.controller.js';
 import { getPendingPayments } from '../controllers/invoice.controller.js';
-import { payInvoiceViaContract } from '../controllers/invoice.controller.js';
+import { payInvoice } from '../controllers/invoice.controller.js';
+import { confirmInvoicePayment } from '../controllers/invoice.controller.js';
 
 const router = Router();
 const uploadMiddleware = multer();
@@ -18,6 +19,7 @@ router.post('/purchase', purchaseInvoice);
 router.post('/purchase/confirm', confirmPurchase);
 router.get('/myPurchases', getMyPurchases);
 router.get('/pending', getPendingPayments);
-router.post('/pay/contract', payInvoiceViaContract);
+router.post('/pay', payInvoice);
+router.post('/confirm-paid', confirmInvoicePayment);
 
 export default router;

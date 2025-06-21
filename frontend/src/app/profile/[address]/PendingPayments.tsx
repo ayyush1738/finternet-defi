@@ -5,6 +5,7 @@ import { Connection, Transaction } from '@solana/web3.js';
 
 export default function PendingPayments() {
   const [payments, setPayments] = useState<any[]>([]);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [solPrice, setSolPrice] = useState<number | null>(null);
@@ -20,16 +21,16 @@ export default function PendingPayments() {
         }
 
         const response = await wallet.connect();
-        const walletAddress = response.publicKey.toString();
+        const connectedAddress = response.publicKey.toString();
+        setWalletAddress(connectedAddress);
 
-        const res = await fetch(`http://localhost:8000/api/v1/invoice/pending?customer=${walletAddress}`);
+        const res = await fetch(`http://localhost:8000/api/v1/invoice/pending?customer=${connectedAddress}`);
         const data = await res.json();
 
         if (!res.ok) throw new Error(data.message || 'Failed to fetch payments');
 
         setPayments(data.pendingPayments || []);
       } catch (err: any) {
-        console.error(err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -50,31 +51,50 @@ export default function PendingPayments() {
     fetchSolPrice();
   }, []);
 
-  const handleSmartPayment = async (id: number) => {
-    try {
-      const wallet = (window as any).solana;
-      const addr = wallet.publicKey.toString();
+  const handleCustomerPayment = async (inv: any) => {
+    const provider = (window as any).solana;
+    if (!provider || !provider.isPhantom) return alert('Phantom not found');
+    if (!walletAddress || !solPrice) return alert('Connect wallet and wait for SOL price');
 
-      const res = await fetch('http://localhost:8000/api/v1/invoice/pay/contract', {
+    try {
+      const res = await fetch('http://localhost:8000/api/v1/invoice/pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, customer: addr }),
+        body: JSON.stringify({
+          cid: inv.cid,
+          customer: walletAddress,
+          solPrice,
+        }),
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Failed to prepare payment transaction');
+      const data = await res.json();
+
+      if (!res.ok || !data.transaction_base64) {
+        throw new Error(data.message || 'Failed to get transaction from server');
       }
 
-      const { transaction_base64 } = await res.json();
+      const { transaction_base64 } = data;
+
+      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
+      const signedTx = await provider.signTransaction(tx);
+      const txid = await connection.sendRawTransaction(signedTx.serialize());
+      await connection.confirmTransaction(txid, 'confirmed');
 
-      const signed = await wallet.signTransaction(tx);
-      const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
-      const txid = await conn.sendRawTransaction(signed.serialize());
-      await conn.confirmTransaction(txid, 'confirmed');
+      alert(`Invoice paid successfully!\nTx: ${txid}`);
+      window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
 
-      alert(`Payment successful! Transaction: ${txid}`);
+      // ✅ Mark invoice as paid in backend
+      await fetch('http://localhost:8000/api/v1/invoice/confirm-paid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cid: inv.cid }),
+      });
+
+      // ✅ Update UI state
+      setPayments((prev) =>
+        prev.map((p) => (p.cid === inv.cid ? { ...p, paid: true } : p))
+      );
     } catch (err: any) {
       console.error(err);
       alert('Payment failed: ' + err.message);
@@ -86,7 +106,6 @@ export default function PendingPayments() {
       <h2 className="text-2xl font-semibold mb-6 text-white">Pending Payments</h2>
 
       {loading && <p className="text-gray-300">Loading pending invoices...</p>}
-      {error && <p className="text-red-400">{error}</p>}
 
       {!loading && payments.length === 0 && (
         <p className="text-gray-400">No pending invoices found.</p>
@@ -117,16 +136,23 @@ export default function PendingPayments() {
                       : '...'}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-block bg-yellow-500/20 text-yellow-400 px-3 py-1 text-xs font-semibold rounded-full">
-                      Pending
-                    </span>
+                    {payment.paid ? (
+                      <span className="inline-block bg-green-500/20 text-green-400 px-3 py-1 text-xs font-semibold rounded-full">
+                        Paid
+                      </span>
+                    ) : (
+                      <span className="inline-block bg-yellow-500/20 text-yellow-400 px-3 py-1 text-xs font-semibold rounded-full">
+                        Pending
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => handleSmartPayment(payment.id)}
-                      className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow"
+                      onClick={() => handleCustomerPayment(payment)}
+                      className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow disabled:opacity-50"
+                      disabled={payment.paid}
                     >
-                      Pay Now
+                      {payment.paid ? 'Paid' : 'Pay Now'}
                     </button>
                   </td>
                 </tr>
