@@ -21,6 +21,7 @@ export default function Hero() {
   const [status, setStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [organizationName, setOrganizationName] = useState('');
+  const [loader, setLoader] = useState(false);
   const router = useRouter();
 
   const getProvider = (): any | null => {
@@ -58,6 +59,8 @@ export default function Hero() {
       return;
     }
 
+    setLoader(true);
+
     if (!walletAddress) {
       await connectWallet();
       if (!walletAddress) {
@@ -84,7 +87,7 @@ export default function Hero() {
           wallet_address: walletAddress,
           nonce: nonce,
           signature: Array.from(signedMessage.signature),
-          username: organizationName,  
+          username: organizationName,
         }),
       });
 
@@ -103,11 +106,13 @@ export default function Hero() {
 
         router.push(`/enterprise/${walletAddress}`);
       } else {
-        setStatus(`Login failed: ${data.message}`);
+        setStatus(`${data.message}`);
       }
     } catch (err: any) {
       console.error(err);
       setStatus(`Login error: ${err.message}`);
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -141,9 +146,9 @@ export default function Hero() {
               position="right"
             />
           </div>
-          {status && <p className="mt-4 text-sm text-red-400">{status}</p>}
         </div>
       </div>
+      
 
       {/* Modal */}
       {showModal && (
@@ -170,6 +175,11 @@ export default function Hero() {
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 text-zinc-400"
               />
             </div>
+            {loader && (
+          <div className="mt-4">
+            <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+          </div>
+        )}
 
             <div className="flex justify-between">
               <button
@@ -185,7 +195,7 @@ export default function Hero() {
                 Cancel
               </button>
             </div>
-            {status && <p className="text-center text-sm text-green-400">{status}</p>}
+            {status && <p className="text-center text-sm text-red-400">{status}</p>}
           </div>
         </div>
       )}

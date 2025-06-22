@@ -18,6 +18,7 @@ export default function WalletLogin() {
   const [token, setToken] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter(); // ✅ Next Router
 
@@ -84,6 +85,8 @@ export default function WalletLogin() {
       return;
     }
 
+    setIsLoggingIn(true);
+
     try {
       const nonceRes = await fetch(`http://localhost:8000/api/v1/auth/nonce?wallet_address=${walletAddress}`);
       const nonceData: NonceResponse = await nonceRes.json();
@@ -125,7 +128,9 @@ export default function WalletLogin() {
     } catch (err: any) {
       console.error(err);
       setStatus(`Login error: ${err.message}`);
-    }
+    }finally {
+    setIsLoggingIn(false); // Stop loading
+  }
   };
 
   useEffect(() => {
@@ -224,9 +229,14 @@ export default function WalletLogin() {
               <button onClick={connectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm">
                 Connect Wallet
               </button>
-              <button onClick={login} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm">
-                Profile
-              </button>
+              <button
+  onClick={login}
+  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm disabled:opacity-50"
+  disabled={isLoggingIn}
+>
+  {isLoggingIn ? 'Logging in...' : 'Profile'}
+</button>
+
               <button onClick={disconnectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500">
                 Logout
               </button>

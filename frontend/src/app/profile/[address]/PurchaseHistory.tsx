@@ -39,29 +39,37 @@ export default function PurchaseHistory() {
             </tr>
           </thead>
           <tbody>
-            {purchases.map((purchase) => (
-              <tr key={purchase.id} className="hover:bg-gray-700/50 transition duration-200">
-                <td className="px-6 py-4 font-medium">INV-{purchase.id}</td>
-                <td className="px-6 py-4">{new Date(purchase.created_at).toLocaleDateString()}</td>
-                <td className="px-6 py-4">{purchase.amount} SOL</td>
-                <td className="px-6 py-4">{purchase.username}</td>
-                <td className="px-6 py-4">
-                  <a
-                    href={`https://ipfs.io/ipfs/${purchase.cid}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow"
-                  >
-                    View PDF
-                  </a>
-                </td>
-                <td className="px-6 py-4">
-                  <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow">
-                    Sell Token
-                  </button>
+            {purchases.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-8 text-gray-400">
+                  No Purchase History Found.
                 </td>
               </tr>
-            ))}
+            ) : (
+              purchases.map((purchase) => (
+                <tr key={purchase.id} className="hover:bg-gray-700/50 transition duration-200">
+                  <td className="px-6 py-4 font-medium">INV-{purchase.id}</td>
+                  <td className="px-6 py-4">{new Date(purchase.created_at).toLocaleDateString()}</td>
+                  <td className="px-6 py-4">{purchase.amount} SOL</td>
+                  <td className="px-6 py-4">{purchase.username}</td>
+                  <td className="px-6 py-4">
+                    <a
+                      href={`https://ipfs.io/ipfs/${purchase.cid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow"
+                    >
+                      View PDF
+                    </a>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow">
+                      Sell Token
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

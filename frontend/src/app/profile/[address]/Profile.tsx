@@ -5,13 +5,15 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { FaSearch, FaPlus } from 'react-icons/fa';
 import PendingPayments from './PendingPayments';
 import PurchaseHistory from './PurchaseHistory';
+import { useRouter } from 'next/navigation';
 
 export default function Profile({ walletAddress }: { walletAddress: string }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('Pending Payments');
   const [hydrated, setHydrated] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+  const router = useRouter();
+  
   const renderTabContent = () => {
     switch (activeTab) {
       case 'Pending Payments':
@@ -74,6 +76,11 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
     return <div className="text-white p-10">Loading profile...</div>;
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('jwt');
+    router.push('/');
+  };
+
   return (
     <div className="bg-gradient-to-b from-violet-400 via-gray-900 to-black text-white h-screen overflow-hidden w-full">
       {/* Header */}
@@ -92,19 +99,19 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
           <div className="text-sm text-gray-300">
             {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching balance...'}
           </div>
-          <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
+          <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 rounded-full cursor-pointer" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
         </div>
       </div>
 
       {isDropdownOpen && (
-            <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mt-60">
+            <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mr-10">
               <div className="px-4 py-2 font-semibold border-b border-gray-700">
                 {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
                 <div className="text-sm text-gray-400">
                   {balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}
                 </div>
               </div>
-              <button  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500">
+              <button onClick={handleLogout}  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer">
                 Logout
               </button>
             </div>
@@ -142,17 +149,17 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
       <div className="flex px-10 mt-6">
         <div className="w-1/4">
           <h2 className="text-lg font-semibold mb-2">Category</h2>
-          <div className="flex flex-wrap gap-2 text-sm text-black">
+          <div className="flex flex-wrap gap-2 text-sm text-black cursor-not-allowed">
             {['All', 'Layer 1', 'Layer 2', 'Stablecoins', 'Smart Contract Platform', 'DeFi', 'AI', 'Pump.fun', 'Dog Themed'].map(cat => (
               <span key={cat} className="bg-white px-2 py-1 rounded">{cat}</span>
             ))}
           </div>
 
           <h2 className="text-lg font-semibold my-4">Chains</h2>
-          <div className="h-12 bg-gray-800 mb-4 rounded" />
+          <div className="h-12 bg-gray-800 mb-4 rounded cursor-not-allowed" />
 
           <h2 className="text-lg font-semibold mb-2">Market Cap</h2>
-          <div className="h-12 bg-gray-800 mb-4 rounded" />
+          <div className="h-12 bg-gray-800 mb-4 rounded cursor-not-allowed" />
         </div>
 
         <div className="w-3/4 pl-10">
