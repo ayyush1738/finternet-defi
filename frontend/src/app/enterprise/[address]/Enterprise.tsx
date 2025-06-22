@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
-import { FaEthereum } from 'react-icons/fa';
+import { SiSolana } from 'react-icons/si';
 import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
 import { useRouter } from 'next/navigation';
 
@@ -182,7 +182,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500"
+                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer"
               >
                 Logout
               </button>
@@ -237,16 +237,18 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                 />
-                <FaEthereum className="ml-2 text-emerald-400" />
+                <SiSolana className="ml-2 text-emerald-400" />
+
+
               </div>
             </div>
 
             <div>
-              <label className="block mb-1 text-sm">Customer Name</label>
+              <label className="block mb-1 text-sm">Customer Public Key</label>
               <input
                 type="text"
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
-                placeholder="Enter Name of Your Client"
+                placeholder="Enter Public Key of Your Client"
                 value={pubKey}
                 onChange={(e) => setPubKey(e.target.value)}
               />
