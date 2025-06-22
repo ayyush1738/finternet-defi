@@ -7,8 +7,8 @@ export default function Footer() {
         
         {/* Left: Brand */}
         <div className="mb-6 md:mb-0">
-          <h3 className="text-white font-bold text-lg">CarbonPay</h3>
-          <p className="text-sm mt-2">Empowering a transparent carbon future through blockchain.</p>
+          <h3 className="text-white font-bold text-lg">ChaInvoice</h3>
+          <p className="text-sm mt-2">Empowering Enterprises with decentralized finance.</p>
         </div>
 
         {/* Right: Links */}
@@ -19,7 +19,6 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-2">Company</h4>
             <ul className="space-y-1">
               <li><a href="#" className="hover:text-white text-sm">About Us</a></li>
-              <li><a href="#" className="hover:text-white text-sm">Careers</a></li>
             </ul>
           </div>
 
@@ -27,8 +26,8 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-2">Connect</h4>
             <div className="flex gap-4 text-xl">
-              <a href="#" className="hover:text-white"><FaGithub /></a>
-              <a href="#" className="hover:text-white"><FaTwitter /></a>
+              <a href="https://github.com/ayyush1738" className="hover:text-white"><FaGithub /></a>
+              <a href="https://x.com/AyushSingh1738" className="hover:text-white"><FaTwitter /></a>
             </div>
           </div>
 
@@ -37,7 +36,7 @@ export default function Footer() {
 
       {/* Bottom: Copyright */}
       <div className="text-center text-xs text-gray-500 mt-6">
-        © 2025 CarbonPay, Inc. All rights reserved.
+        © 2025 ChaInvoice, Inc. All rights reserved.
       </div>
     </footer>
   );
