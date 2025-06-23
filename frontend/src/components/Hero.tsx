@@ -21,7 +21,7 @@ export default function Hero() {
   const [status, setStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [organizationName, setOrganizationName] = useState('');
-  const [loader, setLoader] = useState(false);
+  const [loadingNextPage, setLoadingNextPage] = useState(false);
   const router = useRouter();
 
   const getProvider = (): any | null => {
@@ -58,8 +58,6 @@ export default function Hero() {
       setStatus('Please enter organization name');
       return;
     }
-
-    setLoader(true);
 
     if (!walletAddress) {
       await connectWallet();
@@ -102,17 +100,21 @@ export default function Hero() {
         setStatus('Login successful');
         localStorage.setItem('jwt', data.token);
         localStorage.setItem('organizationName', organizationName);
-        setShowModal(false);
 
-        router.push(`/enterprise/${walletAddress}`);
+        setLoadingNextPage(true); // 🔁 Trigger loader
+        // DON'T hide modal yet so loader appears
+        // Wait a tick to let loader show, then redirect
+        setTimeout(() => {
+          setShowModal(false);
+          router.push(`/enterprise/${walletAddress}`);
+        }, 500); // enough time for loader to visibly render
       } else {
         setStatus(`${data.message}`);
       }
+
     } catch (err: any) {
       console.error(err);
       setStatus(`Login error: ${err.message}`);
-    } finally {
-      setLoader(false);
     }
   };
 
@@ -123,21 +125,29 @@ export default function Hero() {
 
   return (
     <div className="relative h-screen overflow-hidden w-full">
-      <div className='z-10 absolute inset-0'>
+      <div className="z-10 absolute inset-0">
         <WavyBackground backgroundFill="#020009" />
       </div>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10" />
 
       <div className="relative z-20 flex flex-col items-center justify-center h-full w-full text-center px-4">
-        <div className='flex'>
+        <div className="flex">
           <h1 className="text-white text-5xl font-bold mb-4">Cha</h1>
           <h1 className="text-fuchsia-600 text-5xl font-bold mb-4">inVoice</h1>
         </div>
-        <div className='w-1/2'>
+
+        <div className="w-1/2">
           <TextGenerateEffect
             className="text-white text-[10px] md:text-xl lg:text-2xl"
             words="A decentralized marketplace for tokenized invoices, enabling instant liquidity for SMEs and returns for investors"
           />
+
+          {/* 🔁 Loader above Magic Button */}
+          {loadingNextPage && (
+            <div className="mb-4">
+              <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+            </div>
+          )}
 
           <div onClick={openModal} className="w-56 mx-auto mt-6">
             <MagicButton
@@ -148,7 +158,6 @@ export default function Hero() {
           </div>
         </div>
       </div>
-
 
       {/* Modal */}
       {showModal && (
@@ -175,8 +184,10 @@ export default function Hero() {
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 text-zinc-400"
               />
             </div>
-            {loader && (
-              <div className="mt-4">
+
+            {/* 🔁 Loader above Proceed button */}
+            {loadingNextPage && (
+              <div className="mb-4">
                 <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
             )}
@@ -195,7 +206,6 @@ export default function Hero() {
                 Cancel
               </button>
             </div>
-            {status && <p className="text-center text-sm text-red-400">{status}</p>}
           </div>
         </div>
       )}

@@ -30,7 +30,8 @@ const initDb = async () => {
       mint TEXT,
       investor_pubkey TEXT,
       customer_pubkey TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      paid BOOLEAN DEFAULT FALSE
   );
 `;
 

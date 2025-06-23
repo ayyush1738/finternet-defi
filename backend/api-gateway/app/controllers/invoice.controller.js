@@ -126,7 +126,7 @@ export const getMyPurchases = async (req, res) => {
 
   try {
     const result = await db.query(
-      `SELECT id, username, cid, amount, tx_sig, created_at 
+      `SELECT id, username, cid, amount, tx_sig, created_at, paid 
        FROM invoices 
        WHERE investor_pubkey = $1 
        ORDER BY created_at DESC`,
@@ -140,6 +140,7 @@ export const getMyPurchases = async (req, res) => {
   }
 };
 
+
 export const getPendingPayments = async (req, res) => {
   const { customer } = req.query;
 
@@ -148,21 +149,12 @@ export const getPendingPayments = async (req, res) => {
   }
 
   try {
-    // Step 1: Check if user exists
-    const userResult = await db.query(
-      'SELECT * FROM invoices WHERE customer_pubkey = $1',
-      [customer]
-    );
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Customer not found in user database' });
-    }
-
-    // Step 2: Fetch pending invoices for this user
     const invoiceResult = await db.query(
-      `SELECT id, username, cid, inv_amount, created_at 
+      `SELECT id, username, cid, inv_amount, created_at, paid 
        FROM invoices 
-       ORDER BY created_at DESC`
+       WHERE customer_pubkey = $1 
+       ORDER BY created_at DESC`,
+      [customer]
     );
 
     res.json({ pendingPayments: invoiceResult.rows });
@@ -171,6 +163,8 @@ export const getPendingPayments = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
 
 
 export const payInvoice = async (req, res) => {
@@ -228,6 +222,20 @@ export const confirmInvoicePayment = async (req, res) => {
   const { cid } = req.body;
   if (!cid) return res.status(400).json({ message: 'Missing CID' });
 
-  paidCids.add(cid);
-  res.json({ message: 'Marked as paid in-memory' });
+  try {
+    const result = await db.query(
+      `UPDATE invoices SET paid = TRUE WHERE cid = $1`,
+      [cid]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    res.json({ message: 'Invoice marked as paid' });
+  } catch (err) {
+    console.error('❌ Error confirming invoice payment:', err);
+    res.status(500).json({ message: 'Failed to mark invoice as paid' });
+  }
 };
+

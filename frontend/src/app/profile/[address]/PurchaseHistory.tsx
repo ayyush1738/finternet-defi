@@ -23,6 +23,7 @@ export default function PurchaseHistory() {
     fetchPurchases();
   }, []);
 
+
   return (
     <div className="p-6 w-full">
       <h2 className="text-2xl font-semibold mb-6 text-white">Purchase History</h2>
@@ -36,6 +37,7 @@ export default function PurchaseHistory() {
               <th className="px-6 py-3">Organization</th>
               <th className="px-6 py-3">Invoice</th>
               <th className="px-6 py-3">Action</th>
+              <th className="px-6 py-3">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -63,10 +65,26 @@ export default function PurchaseHistory() {
                     </a>
                   </td>
                   <td className="px-6 py-4">
-                    <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow">
+                    <button
+                      disabled={purchase.paid}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow disabled:opacity-50"
+                    >
                       Sell Token
                     </button>
+
                   </td>
+                  <td className="px-6 py-4">
+                    {purchase.paid ? (
+                      <span className="inline-block bg-green-500/20 text-green-400 px-3 py-1 text-xs font-semibold rounded-full">
+                        Paid
+                      </span>
+                    ) : (
+                      <span className="inline-block bg-yellow-500/20 text-yellow-400 px-3 py-1 text-xs font-semibold rounded-full">
+                        Awaiting Payment
+                      </span>
+                    )}
+                  </td>
+
                 </tr>
               ))
             )}
