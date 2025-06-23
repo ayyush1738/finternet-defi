@@ -25,7 +25,10 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
           <PurchaseHistory />
         </div>;
       case 'Tokens':
-        return <div className="text-white">Tokens Content</div>;
+        return <div className="text-white">
+          Tokens Content
+          <p className = "mt-42 ml-96 text-4xl">Coming Soon</p>
+        </div>;
       case 'Listings':
         return <div className="text-white">Listings Content</div>;
       case 'Offers':
