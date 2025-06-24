@@ -7,11 +7,11 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 
 export default function OnDemandOffset() {
   const data = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], // x-axis (months)
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
     datasets: [
       {
         label: 'Credits Earned',
-        data: [100, 120, 150, 130, 170, 190, 180, 210], // y-axis (mock credits)
+        data: [100, 120, 150, 130, 170, 190, 180, 210],
         borderColor: '#22c55e',
         backgroundColor: 'rgba(34, 197, 94, 0.2)',
         pointRadius: 4,
@@ -55,14 +55,14 @@ export default function OnDemandOffset() {
   };
 
   return (
-    <div className='flex absolute m-5'>
-      <div className='ml-20'>
+    <div className="flex flex-col md:flex-row absolute m-5 gap-8">
+      <div className="ml-0 md:ml-20">
         <h2 className="text-4xl font-bold mb-4">On-Chain Verification</h2>
         <p className="text-lg mb-8">
           Solana powered on-chain user verification.
         </p>
 
-        <div className="space-y-6 mr-30">
+        <div className="space-y-6 mr-0 md:mr-30">
           {[
             { title: 'Instant Verification', desc: 'You just need a Phantom wallet to instantly buy or sell the tokenized invoices.' },
             { title: 'Real-Time Tracking', desc: 'Monitor the purchased/sold tokens with the intutive UI.' },
@@ -79,17 +79,15 @@ export default function OnDemandOffset() {
         </div>
       </div>
 
-      {/* Right Graph Card */}
-      <div className="bg-black/50 border border-gray-700 rounded-xl p-6 w-1/2 ml-30 h-80 relative">
+      {/* Right Graph Card - Hidden on small screens */}
+      <div className="hidden md:block bg-black/50 border border-gray-700 rounded-xl p-6 w-full md:w-1/2 ml-0 md:ml-30 h-80 relative">
         <h3 className="text-lg font-semibold mb-2">Tokenization Real Time Tracking</h3>
         <p className="text-sm text-gray-400 mb-3">Average credits Used</p>
         <button className="text-green-400 text-xs mb-5">(Mock)Historic Data</button>
 
-        {/* Chart */}
         <div className="relative w-full h-40">
           <Line data={data} options={options} />
         </div>
-
       </div>
     </div>
   );

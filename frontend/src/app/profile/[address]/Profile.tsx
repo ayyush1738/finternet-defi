@@ -13,7 +13,7 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
   const [hydrated, setHydrated] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
-  
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'Pending Payments':
@@ -27,14 +27,25 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
       case 'Tokens':
         return <div className="text-white">
           Tokens Content
-          <p className = "mt-42 ml-96 text-4xl">Coming Soon</p>
+          <p className="mt-42 ml-96 text-4xl">Coming Soon</p>
         </div>;
       case 'Listings':
-        return <div className="text-white">Listings Content</div>;
+        return <div className="text-white">
+          Listings Content
+          <p className="mt-42 ml-96 text-4xl">Coming Soon</p>
+        </div>;
       case 'Offers':
-        return <div className="text-white">Offers Content</div>;
+        return <div className="text-white">
+          Offers Content
+          <p className="mt-42 ml-96 text-4xl">Coming Soon</p>
+
+        </div>;
       case 'Activity':
-        return <div className="text-white">Activity Content</div>;
+        return <div className="text-white">
+          Activity Content
+          <p className="mt-42 ml-96 text-4xl">Coming Soon</p>
+
+        </div>;
       default:
         return <div className="text-white">Select a Tab</div>;
     }
@@ -107,18 +118,18 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
       </div>
 
       {isDropdownOpen && (
-            <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mr-10">
-              <div className="px-4 py-2 font-semibold border-b border-gray-700">
-                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
-                <div className="text-sm text-gray-400">
-                  {balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}
-                </div>
-              </div>
-              <button onClick={handleLogout}  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer">
-                Logout
-              </button>
+        <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mr-10">
+          <div className="px-4 py-2 font-semibold border-b border-gray-700">
+            {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+            <div className="text-sm text-gray-400">
+              {balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}
             </div>
-          )}
+          </div>
+          <button onClick={handleLogout} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer">
+            Logout
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="px-10 mt-4 flex justify-between text-gray-400 text-sm">

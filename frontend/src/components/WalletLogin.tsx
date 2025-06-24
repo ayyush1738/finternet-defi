@@ -19,6 +19,7 @@ export default function WalletLogin() {
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter(); // ✅ Next Router
 
@@ -43,7 +44,8 @@ export default function WalletLogin() {
     if (!provider) return;
     if (!checkPhantom()) return;
 
-    try {
+    setIsConnecting(true);
+    try  {
       const response = await provider.connect();
       const address = response.publicKey.toString();
       setWalletAddress(address);
@@ -58,6 +60,8 @@ export default function WalletLogin() {
     } catch (err) {
       console.error(err);
       setStatus('Wallet connection failed');
+    }finally{
+      setIsConnecting(false);
     }
   };
 
@@ -91,6 +95,8 @@ export default function WalletLogin() {
       const nonceRes = await fetch(`http://localhost:8000/api/v1/auth/nonce?wallet_address=${walletAddress}`);
       const nonceData: NonceResponse = await nonceRes.json();
       const { nonce } = nonceData;
+
+      setIsLoggingIn(true);
 
       const provider = getProvider();
       if (!provider) return;
@@ -128,9 +134,7 @@ export default function WalletLogin() {
     } catch (err: any) {
       console.error(err);
       setStatus(`Login error: ${err.message}`);
-    }finally {
-    setIsLoggingIn(false); // Stop loading
-  }
+    } 
   };
 
   useEffect(() => {
@@ -226,18 +230,21 @@ export default function WalletLogin() {
                   {balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}
                 </div>
               </div>
-              <button onClick={connectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm">
-                Connect Wallet
+              <button onClick={connectWallet} 
+              className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm cursor-pointer"
+              disabled={isConnecting}
+              >
+               {isConnecting ? 'connecting...' : 'Connect Wallet'}
               </button>
               <button
-  onClick={login}
-  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm disabled:opacity-50"
-  disabled={isLoggingIn}
->
-  {isLoggingIn ? 'Logging in...' : 'Profile'}
-</button>
+                onClick={login}
+                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm disabled:opacity-50 cursor-pointer"
+                disabled={isLoggingIn}
+              >
+                {isLoggingIn ? 'Logging in...' : 'Profile'}
+              </button>
 
-              <button onClick={disconnectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500">
+              <button onClick={disconnectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer">
                 Logout
               </button>
             </div>
