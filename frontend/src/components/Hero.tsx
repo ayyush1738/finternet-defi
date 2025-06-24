@@ -102,13 +102,11 @@ export default function Hero() {
         localStorage.setItem('jwt', data.token);
         localStorage.setItem('organizationName', organizationName);
 
-        setLoadingNextPage(true); // 🔁 Trigger loader
-        // DON'T hide modal yet so loader appears
-        // Wait a tick to let loader show, then redirect
+        setLoadingNextPage(true); 
         setTimeout(() => {
           setShowModal(false);
           router.push(`/enterprise/${walletAddress}`);
-        }, 500); // enough time for loader to visibly render
+        }, 500); 
       } else {
         setStatus(`${data.message}`);
       }

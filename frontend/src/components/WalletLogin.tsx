@@ -33,19 +33,27 @@ export default function WalletLogin() {
   const checkPhantom = (): boolean => {
     const provider = getProvider();
     if (!provider || !provider.isPhantom) {
-      alert('Please install Phantom Wallet');
+      if (typeof window !== "undefined") {
+        window.open("https://phantom.app/download", "_blank");
+      }
+      alert("Phantom Wallet is not installed. Redirecting you to install it.");
       return false;
     }
     return true;
   };
 
+
   const connectWallet = async () => {
     const provider = getProvider();
-    if (!provider) return;
-    if (!checkPhantom()) return;
+
+    if (!provider || !provider.isPhantom) {
+      alert("Phantom Wallet not found. Redirecting you to install it.");
+      window.open("https://phantom.app/download", "_blank");
+      return;
+    }
 
     setIsConnecting(true);
-    try  {
+    try {
       const response = await provider.connect();
       const address = response.publicKey.toString();
       setWalletAddress(address);
@@ -60,10 +68,11 @@ export default function WalletLogin() {
     } catch (err) {
       console.error(err);
       setStatus('Wallet connection failed');
-    }finally{
+    } finally {
       setIsConnecting(false);
     }
   };
+
 
   const disconnectWallet = async () => {
     const provider = getProvider();
@@ -134,7 +143,7 @@ export default function WalletLogin() {
     } catch (err: any) {
       console.error(err);
       setStatus(`Login error: ${err.message}`);
-    } 
+    }
   };
 
   useEffect(() => {
@@ -230,11 +239,11 @@ export default function WalletLogin() {
                   {balance !== null ? `${balance.toFixed(2)} SOL` : '0.00'}
                 </div>
               </div>
-              <button onClick={connectWallet} 
-              className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm cursor-pointer"
-              disabled={isConnecting}
+              <button onClick={connectWallet}
+                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm cursor-pointer"
+                disabled={isConnecting}
               >
-               {isConnecting ? 'connecting...' : 'Connect Wallet'}
+                {isConnecting ? 'connecting...' : 'Connect Wallet'}
               </button>
               <button
                 onClick={login}

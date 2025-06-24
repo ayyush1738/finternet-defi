@@ -13,7 +13,7 @@ export default function Home() {
       <Hero />
       <Features />
       <Market />
-      <OffsetTracking/>
+      <OffsetTracking />
       <Collections />
       <Footer />
     </main>
