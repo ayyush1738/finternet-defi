@@ -67,6 +67,7 @@ export default function Hero() {
       }
     }
 
+
     try {
       const nonceRes = await fetch(`http://localhost:8000/api/v1/auth/nonce?wallet_address=${walletAddress}`);
       const nonceData: NonceResponse = await nonceRes.json();
@@ -142,7 +143,6 @@ export default function Hero() {
             words="A decentralized marketplace for tokenized invoices, enabling instant liquidity for SMEs and returns for investors"
           />
 
-          {/* 🔁 Loader above Magic Button */}
           {loadingNextPage && (
             <div className="mb-4">
               <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
@@ -159,7 +159,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-zinc-900 text-white rounded-xl p-8 w-full max-w-md shadow-lg space-y-6">
@@ -185,27 +184,25 @@ export default function Hero() {
               />
             </div>
 
-            {/* 🔁 Loader above Proceed button */}
-            {loadingNextPage && (
-              <div className="mb-4">
-                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-              </div>
-            )}
-
             <div className="flex justify-between">
               <button
                 onClick={handleEnterpriseLogin}
-                className="bg-gradient-to-br from-purple-600 to-green-500 px-6 py-2 rounded-lg font-semibold hover:opacity-80"
+                className="bg-gradient-to-br from-purple-600 to-green-500 px-6 py-2 rounded-lg font-semibold hover:opacity-80 cursor-pointer"
               >
                 Proceed
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                className="px-6 py-2 rounded-lg border border-zinc-600 hover:bg-zinc-700"
+                className="px-6 py-2 rounded-lg border border-zinc-600 hover:bg-zinc-700 cursor-pointer"
               >
                 Cancel
               </button>
             </div>
+            {loadingNextPage && (
+              <div className="mb-4">
+                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+              </div>
+            )}
           </div>
         </div>
       )}

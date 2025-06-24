@@ -21,7 +21,7 @@ export default function WalletLogin() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter(); // ✅ Next Router
+  const router = useRouter();
 
   const getProvider = (): any | null => {
     if (typeof window !== 'undefined' && 'solana' in window) {
@@ -227,7 +227,7 @@ export default function WalletLogin() {
               <div className="px-4 py-2 font-semibold border-b border-gray-700">
                 {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
                 <div className="text-sm text-gray-400">
-                  {balance !== null ? `$${balance.toFixed(2)}` : '$0.00'}
+                  {balance !== null ? `${balance.toFixed(2)} SOL` : '0.00'}
                 </div>
               </div>
               <button onClick={connectWallet} 
@@ -245,7 +245,7 @@ export default function WalletLogin() {
               </button>
 
               <button onClick={disconnectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer">
-                Logout
+                Disconect
               </button>
             </div>
           )}

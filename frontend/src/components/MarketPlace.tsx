@@ -104,7 +104,6 @@ export default function Market() {
     <h2 className="text-2xl font-semibold mb-6 text-white">#Invoice Listing</h2>
     <p className="text-sm text-gray-400 mb-3">Invoices Will be listed here after the upload</p>
 
-    {/* Desktop Table */}
     <div className="hidden md:block overflow-x-auto rounded-xl shadow-lg bg-gray-800/60 backdrop-blur-lg">
       <table className="min-w-full table-auto text-left text-sm text-gray-300">
         <thead className="bg-gray-900/80 sticky top-0 z-10">
@@ -121,7 +120,6 @@ export default function Market() {
         </thead>
       </table>
 
-      {/* Scrollable tbody */}
       <div className="max-h-[480px] overflow-y-auto custom-scrollbar">
         <table className="min-w-full table-auto text-left text-sm text-gray-300">
           <tbody>
