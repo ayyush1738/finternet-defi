@@ -15,14 +15,12 @@ export const upload = async (req, res) => {
     // 🔍 OCR + IPFS upload
     const ocrResp = await axios.post('http://localhost:8001/analyze', { file_b64: fileB64 });
 
-    const riskResp = await axios.post('http://localhost:8002/score', { text: ocrResp.data.text });
 
     // 🧾 Create transaction via NFT minting service
     const web3Resp = await axios.post('http://localhost:5000/mint', {
       amount: req.body.amount,
       profit: req.body.profit,
       due_ts: req.body.due_ts,
-      risk: riskResp.data.risk,
       cid: ocrResp.data.cid,
       inv_amount: ocrResp.data.total_amount,
       creator: req.body.creator,
