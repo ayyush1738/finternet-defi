@@ -259,7 +259,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
         <button
           onClick={handleMint}
           disabled={!fileName || !name || !price}
-          className="w-full bg-gradient-to-br from-purple-600 to-green-500 py-3 rounded-xl font-semibold text-lg hover:opacity-80 disabled:opacity-40"
+          className="w-full bg-gradient-to-br from-purple-600 to-green-500 py-3 rounded-xl font-semibold text-lg hover:opacity-80 disabled:opacity-40 cursor-pointer"
         >
           Mint NFT
         </button>
