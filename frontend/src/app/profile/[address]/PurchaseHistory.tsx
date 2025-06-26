@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 
 export default function PurchaseHistory() {
   const [purchases, setPurchases] = useState<any[]>([]);
+  const [solPrice, setSolPrice] = useState<number | null>(null);
+
 
   useEffect(() => {
     const fetchPurchases = async () => {
@@ -18,9 +20,30 @@ export default function PurchaseHistory() {
       } catch (err) {
         console.error('Failed to fetch purchase history:', err);
       }
+      const fetchSolPrice = async () => {
+        try {
+          const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+          const data = await res.json();
+          setSolPrice(data.solana.usd);
+          console.log(solPrice);
+        } catch (err) {
+          console.error('Failed to fetch SOL price:', err);
+        }
+      };
+    };
+    const fetchSolPrice = async () => {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const data = await res.json();
+        setSolPrice(data.solana.usd);
+        console.log(solPrice);
+      } catch (err) {
+        console.error('Failed to fetch SOL price:', err);
+      }
     };
 
     fetchPurchases();
+    fetchSolPrice()
   }, []);
 
 
@@ -34,9 +57,10 @@ export default function PurchaseHistory() {
               <th className="px-6 py-3">Invoice ID</th>
               <th className="px-6 py-3">Date</th>
               <th className="px-6 py-3">Amount</th>
+              <th className="px-6 py-3">Profit</th>
               <th className="px-6 py-3">Organization</th>
               <th className="px-6 py-3">Invoice</th>
-              <th className="px-6 py-3">Action</th>
+              {/* <th className="px-6 py-3">Action</th> */}
               <th className="px-6 py-3">Status</th>
             </tr>
           </thead>
@@ -53,6 +77,11 @@ export default function PurchaseHistory() {
                   <td className="px-6 py-4 font-medium">INV-{purchase.id}</td>
                   <td className="px-6 py-4">{new Date(purchase.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4">{purchase.amount} SOL</td>
+                  <td className="px-6 py-4">
+                    {purchase.inv_amount && solPrice
+                      ? `${((purchase.inv_amount / solPrice) - purchase.amount).toFixed(4)} SOL`
+                      : '...'}
+                  </td>
                   <td className="px-6 py-4">{purchase.username}</td>
                   <td className="px-6 py-4">
                     <a
@@ -64,7 +93,7 @@ export default function PurchaseHistory() {
                       View PDF
                     </a>
                   </td>
-                  <td className="px-6 py-4">
+                  {/* <td className="px-6 py-4">
                     <button
                       disabled={purchase.paid}
                       className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow disabled:opacity-50"
@@ -72,7 +101,7 @@ export default function PurchaseHistory() {
                       Sell Token
                     </button>
 
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4">
                     {purchase.paid ? (
                       <span className="inline-block bg-green-500/20 text-green-400 px-3 py-1 text-xs font-semibold rounded-full">

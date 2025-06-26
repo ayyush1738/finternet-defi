@@ -63,7 +63,7 @@ export const getMyPurchases = async (req, res) => {
 
   try {
     const result = await db.query(
-      `SELECT id, username, cid, amount, tx_sig, created_at, paid 
+      `SELECT id, username, cid, amount, inv_amount, tx_sig, created_at, paid 
        FROM invoices 
        WHERE investor_pubkey = $1 
        ORDER BY created_at DESC`,
