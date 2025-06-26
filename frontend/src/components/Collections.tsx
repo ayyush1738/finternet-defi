@@ -38,7 +38,6 @@ export default function Collections() {
             </thead>
           </table>
 
-          {/* Scrollable tbody wrapper */}
           <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
             <table className="min-w-full text-sm text-left text-gray-300">
               <tbody>

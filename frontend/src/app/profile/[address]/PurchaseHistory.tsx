@@ -12,7 +12,7 @@ export default function PurchaseHistory() {
         const response = await wallet.connect();
         const walletAddress = response.publicKey.toString();
 
-        const res = await fetch(`http://localhost:8000/api/v1/invoice/myPurchases?buyer=${walletAddress}`);
+        const res = await fetch(`http://localhost:8000/api/v1/investor/myPurchases?buyer=${walletAddress}`);
         const data = await res.json();
         setPurchases(data);
       } catch (err) {

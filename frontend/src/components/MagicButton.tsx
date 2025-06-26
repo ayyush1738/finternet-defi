@@ -2,7 +2,6 @@
 import React, { FC } from "react";
 import { cn } from "@/libs/utils";
 
-// MagicButton.tsx
 export const MagicButton = ({
     title, icon, position, handleClick, otherClasses,
     className,

@@ -79,7 +79,6 @@ export default function OnDemandOffset() {
         </div>
       </div>
 
-      {/* Right Graph Card - Hidden on small screens */}
       <div className="hidden md:block bg-black/50 border border-gray-700 rounded-xl p-6 w-full md:w-1/2 ml-0 md:ml-30 h-80 relative">
         <h3 className="text-lg font-semibold mb-2">Tokenization Real Time Tracking</h3>
         <p className="text-sm text-gray-400 mb-3">Average credits Used</p>

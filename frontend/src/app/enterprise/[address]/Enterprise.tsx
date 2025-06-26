@@ -19,7 +19,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
-    const org = localStorage.getItem('organizationName'); // ← get the org name
+    const org = localStorage.getItem('organizationName'); 
     if (!token) {
       alert('Unauthorized. Please login again.');
       router.push('/');
@@ -93,7 +93,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
 
       const token = localStorage.getItem('jwt');
-      const uploadRes = await fetch('http://localhost:8000/api/v1/invoice/upload', {
+      const uploadRes = await fetch('http://localhost:8000/api/v1/enterprise/upload', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token || ''}`,
@@ -125,7 +125,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      await fetch('http://localhost:8000/api/v1/invoice/finalize', {
+      await fetch('http://localhost:8000/api/v1/enterprise/finalize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

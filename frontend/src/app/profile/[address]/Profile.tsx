@@ -53,19 +53,16 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
 
 
   useEffect(() => {
-    // ✅ Ensure this runs only on client (hydration guard)
     if (typeof window !== 'undefined') {
       setHydrated(true);
 
       const storedBalance = localStorage.getItem('balance');
       const storedWallet = localStorage.getItem('walletAddress');
 
-      // ✅ Load from localStorage if wallet matches
       if (storedWallet === walletAddress && storedBalance) {
         setBalance(parseFloat(storedBalance));
       }
 
-      // ✅ Fetch fresh balance from chain
       const fetchBalance = async () => {
         const connection = new Connection("https://api.devnet.solana.com", "confirmed");
         const pubKey = new PublicKey(walletAddress);

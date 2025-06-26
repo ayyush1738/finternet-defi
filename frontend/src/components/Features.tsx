@@ -4,12 +4,10 @@ import { BsShieldCheck, BsGraphUpArrow } from 'react-icons/bs';
 export default function Features() {
     return (
         <section className="relative overflow-hidden text-white py-16 px-6 flex flex-col items-center">
-            {/* Background Image */}
             <div className="absolute inset-0 bg-center bg-cover bg-no-repeat bg-[url('/sol.png')]">
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-md"></div>
             </div>
 
-            {/* Foreground Content */}
             <div className="relative z-10">
                 <h1 className="text-4xl font-bold text-center mb-4">What We Offer?</h1>
 

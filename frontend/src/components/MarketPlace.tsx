@@ -56,7 +56,7 @@ export default function Market() {
     }
 
     try {
-      const res = await fetch('http://localhost:8000/api/v1/invoice/purchase', {
+      const res = await fetch('http://localhost:8000/api/v1/investor/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -79,7 +79,7 @@ export default function Market() {
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      await fetch('http://localhost:8000/api/v1/invoice/purchase/confirm', {
+      await fetch('http://localhost:8000/api/v1/investor/purchase/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
