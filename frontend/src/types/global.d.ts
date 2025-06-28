@@ -1,10 +1,29 @@
-interface Window {
-    solana?: SolanaProvider;
-}
+// types/global.d.ts
 
-interface SolanaProvider {
+import type { PublicKey } from '@solana/web3.js';
+
+export {};
+
+declare global {
+  interface Window {
+    solana?: SolanaProvider;
+  }
+
+  interface SolanaProvider {
     isPhantom?: boolean;
-    publicKey?: import('@solana/web3.js').PublicKey;
-    connect: (opts?: any) => Promise<{ publicKey: import('@solana/web3.js').PublicKey }>;
-    signMessage: (message: Uint8Array, display?: string) => Promise<{ signature: Uint8Array; publicKey: import('@solana/web3.js').PublicKey }>;
+    publicKey?: PublicKey;
+    isConnected?: boolean;
+    connect: (opts?: { onlyIfTrusted: boolean }) => Promise<{ publicKey: PublicKey }>;
+    disconnect: () => Promise<void>;
+    signMessage: (
+      message: Uint8Array,
+      display?: string
+    ) => Promise<{ signature: Uint8Array; publicKey: PublicKey }>;
+    signTransaction: (transaction: import('@solana/web3.js').Transaction) => Promise<import('@solana/web3.js').Transaction>;
+    signAllTransactions?: (
+      transactions: import('@solana/web3.js').Transaction[]
+    ) => Promise<import('@solana/web3.js').Transaction[]>;
+    on: (event: string, handler: (args: any) => void) => void;
+    off: (event: string, handler: (args: any) => void) => void;
+  }
 }
