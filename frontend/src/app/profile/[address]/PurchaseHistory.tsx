@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 export default function PurchaseHistory() {
   const [purchases, setPurchases] = useState<any[]>([]);
   const [solPrice, setSolPrice] = useState<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(true); // You missed declaring this
+  const [loading, setLoading] = useState<boolean>(true); 
 
   useEffect(() => {
     const fetchData = async () => {

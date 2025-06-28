@@ -23,7 +23,6 @@ export default function Collections() {
       <h2 className="text-2xl font-semibold mb-6 text-white">#Top Collections (Mock Data)</h2>
 
       <div className="overflow-x-auto rounded-xl shadow-lg bg-gray-800/60 backdrop-blur-lg">
-        {/* Desktop Table */}
         <div className="hidden md:block">
           <table className="min-w-full text-sm text-left text-gray-300">
             <thead className="bg-gray-900/80 sticky top-0 z-10">
