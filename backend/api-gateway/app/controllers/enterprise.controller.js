@@ -9,11 +9,11 @@ export const upload = async (req, res) => {
     const fileB64 = file.buffer.toString('base64');
 
     // 🔍 OCR + IPFS upload
-    const ocrResp = await axios.post('http://localhost:8001/analyze', { file_b64: fileB64 });
+    const ocrResp = await axios.post('https://finternet-ocr-service-production.up.railway.app/analyze', { file_b64: fileB64 });
 
 
     // 🧾 Create transaction via NFT minting service
-    const web3Resp = await axios.post('http://localhost:5000/mint', {
+    const web3Resp = await axios.post('https://mint.linkpc.net/mint', {
       amount: req.body.amount,
       profit: req.body.profit,
       due_ts: req.body.due_ts,

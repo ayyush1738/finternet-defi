@@ -24,7 +24,7 @@ export default function PendingPayments() {
         const connectedAddress = response.publicKey.toString();
         setWalletAddress(connectedAddress);
 
-        const res = await fetch(`http://localhost:8000/api/v1/customer/pending?customer=${connectedAddress}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/customer/pending?customer=${connectedAddress}`);
         const data = await res.json();
 
         if (!res.ok) throw new Error(data.message || 'Failed to fetch payments');
@@ -57,7 +57,7 @@ export default function PendingPayments() {
     if (!walletAddress || !solPrice) return alert('Connect wallet and wait for SOL price');
 
     try {
-      const res = await fetch('http://localhost:8000/api/v1/customer/pay', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/customer/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,7 +84,7 @@ export default function PendingPayments() {
       alert(`Invoice paid successfully!\nTx: ${txid}`);
       window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
 
-      await fetch('http://localhost:8000/api/v1/customer/confirm-paid', {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/customer/confirm-paid`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cid: inv.cid }),

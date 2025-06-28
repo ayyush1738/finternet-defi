@@ -101,7 +101,7 @@ export default function WalletLogin() {
     setIsLoggingIn(true);
 
     try {
-      const nonceRes = await fetch(`http://localhost:8000/api/v1/auth/nonce?wallet_address=${walletAddress}`);
+      const nonceRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/nonce?wallet_address=${walletAddress}`);
       const nonceData: NonceResponse = await nonceRes.json();
       const { nonce } = nonceData;
 
@@ -113,7 +113,7 @@ export default function WalletLogin() {
       const encodedMsg = new TextEncoder().encode(nonce);
       const signedMessage: SignedMessage = await provider.signMessage(encodedMsg, 'utf8');
 
-      const loginRes = await fetch('http://localhost:8000/api/v1/auth/user', {
+      const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/user`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

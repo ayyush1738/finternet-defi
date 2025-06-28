@@ -15,11 +15,13 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [organizationName, setOrganizationName] = useState<string | null>(null);
+  const [isMinting, setIsMinting] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
-    const org = localStorage.getItem('organizationName'); 
+    const org = localStorage.getItem('organizationName');
     if (!token) {
       alert('Unauthorized. Please login again.');
       router.push('/');
@@ -72,6 +74,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       return;
     }
 
+    setIsMinting(true);
+
     try {
       const mintKeypair = Keypair.generate();
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -93,7 +97,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
 
       const token = localStorage.getItem('jwt');
-      const uploadRes = await fetch('http://localhost:8000/api/v1/enterprise/upload', {
+      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/upload`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token || ''}`,
@@ -125,7 +129,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      await fetch('http://localhost:8000/api/v1/enterprise/finalize', {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/finalize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,6 +149,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     } catch (err: any) {
       console.error('Minting failed', err);
       alert(`Minting failed: ${err.message}`);
+    } finally {
+      setIsMinting(false);
     }
   };
 
@@ -155,41 +161,50 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-10 px-4">
-      <div className="px-10 pt-6 flex justify-between items-center w-full max-w-5xl">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
-          <div>
-            <div className="text-sm text-gray-300">{walletAddress}</div>
-            <div className="text-sm text-gray-400">Wallet Owner</div>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4 relative">
-          <div className="text-sm text-gray-300">
-            {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching balance...'}
-          </div>
-          <div
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-10 h-10 rounded-full cursor-pointer"
-            style={{ backgroundColor: getColorFromWallet(walletAddress) }}
-          />
-          {isDropdownOpen && (
-            <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 top-12">
-              <div className="px-4 py-2 font-semibold border-b border-gray-700">
-                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
-                <div className="text-sm text-gray-400">
-                  {balance !== null ? `${balance.toFixed(2)} SOL` : '$0.00'}
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer"
-              >
-                Logout
-              </button>
+      <div className="w-full px-4 pt-4 max-w-5xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+
+          {/* Wallet Info */}
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div
+              className="w-14 h-14 rounded-full shrink-0"
+              style={{ backgroundColor: getColorFromWallet(walletAddress) }}
+            ></div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-300 break-all md:break-words">{walletAddress}</span>
+              <span className="text-sm text-gray-400">Wallet Owner</span>
             </div>
-          )}
+          </div>
+
+          <div className="relative flex items-center justify-between w-full md:w-auto">
+            <span className="text-sm text-gray-300 mr-4 md:mr-2">
+              {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching...'}
+            </span>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-10 h-10 rounded-full shrink-0 cursor-pointer"
+              style={{ backgroundColor: getColorFromWallet(walletAddress) }}
+            />
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-14 w-56 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-50">
+                <div className="px-4 py-3 text-sm font-medium border-b border-zinc-700 text-white">
+                  {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                  <div className="text-xs text-gray-400">
+                    {balance !== null ? `${balance.toFixed(2)} SOL` : '$0.00'}
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-zinc-700 cursor-pointer"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
 
       <h1 className="text-4xl font-bold mb-6">Mint PDF as NFT</h1>
 
@@ -258,10 +273,10 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
         <button
           onClick={handleMint}
-          disabled={!fileName || !name || !price}
+          disabled={!fileName || !name || !price || isMinting}
           className="w-full bg-gradient-to-br from-purple-600 to-green-500 py-3 rounded-xl font-semibold text-lg hover:opacity-80 disabled:opacity-40 cursor-pointer"
         >
-          Mint NFT
+          {isMinting ? 'Minting...' : 'Mint'}
         </button>
       </div>
     </div>

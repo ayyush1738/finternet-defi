@@ -71,7 +71,6 @@ app.post('/mint', async (req, res) => {
 
     const lamports = await getMinimumBalanceForRentExemptMint(connection);
 
-    // 🧾 Instructions
     const createMintAccountIx = SystemProgram.createAccount({
       fromPubkey: userPublicKey,
       newAccountPubkey: mintPublicKey,

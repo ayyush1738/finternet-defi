@@ -69,7 +69,7 @@ export default function Hero() {
 
 
     try {
-      const nonceRes = await fetch(`http://localhost:8000/api/v1/auth/nonce?wallet_address=${walletAddress}`);
+      const nonceRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/nonce?wallet_address=${walletAddress}`);
       const nonceData: NonceResponse = await nonceRes.json();
       const { nonce } = nonceData;
 
@@ -79,7 +79,7 @@ export default function Hero() {
       const encodedMsg = new TextEncoder().encode(nonce);
       const signedMessage: SignedMessage = await provider.signMessage(encodedMsg, 'utf8');
 
-      const loginRes = await fetch('http://localhost:8000/api/v1/auth/enterprise', {
+      const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/enterprise`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

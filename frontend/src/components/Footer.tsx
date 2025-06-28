@@ -22,8 +22,8 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-2">Connect</h4>
             <div className="flex gap-4 text-xl">
-              <a href="https://github.com/ayyush1738" className="hover:text-white"><FaGithub /></a>
-              <a href="https://x.com/AyushSingh1738" className="hover:text-white"><FaTwitter /></a>
+              <a href="https://github.com/ayyush1738" target='_blank' className="hover:text-white"><FaGithub /></a>
+              <a href="https://x.com/AyushSingh1738" target='_blank' className="hover:text-white"><FaTwitter /></a>
             </div>
           </div>
 
