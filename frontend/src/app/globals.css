@@ -43,3 +43,10 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #000000; /* Tailwind indigo-700 */
 }
+
+/* Hides Next.js dev build indicator */
+#__next-build-watcher,
+[data-nextjs-dev-overlay] {
+  display: none !important;
+}
+
