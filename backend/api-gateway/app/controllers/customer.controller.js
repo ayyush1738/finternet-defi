@@ -26,8 +26,6 @@ export const getPendingPayments = async (req, res) => {
 };
 
 
-
-
 export const payInvoice = async (req, res) => {
   try {
     const { cid, customer, solPrice } = req.body;
@@ -37,7 +35,7 @@ export const payInvoice = async (req, res) => {
     }
 
     const result = await db.query(
-      `SELECT inv_amount, investor_pubkey, customer_pubkey FROM invoices WHERE cid = $1`,
+      `SELECT inv_amount, creator, investor_pubkey, customer_pubkey FROM invoices WHERE cid = $1`,
       [cid]
     );
 
@@ -45,10 +43,12 @@ export const payInvoice = async (req, res) => {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    const { inv_amount, investor_pubkey, customer_pubkey } = result.rows[0];
+    const { inv_amount, creator, investor_pubkey, customer_pubkey } = result.rows[0];
 
-    if (customer_pubkey !== customer) {
-      return res.status(400).json({ message: 'Unauthorized: wallet mismatch' });
+    const recipientPubkey = investor_pubkey ? investor_pubkey : creator;
+
+    if (!recipientPubkey) {
+      return res.status(400).json({ message: 'No recipient public key found (investor or creator)' });
     }
 
     const amountInSol = inv_amount / solPrice;
@@ -56,7 +56,7 @@ export const payInvoice = async (req, res) => {
 
     const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
     const fromPub = new PublicKey(customer);
-    const toPub = new PublicKey(investor_pubkey);
+    const toPub = new PublicKey(recipientPubkey);
     const latestBlockhash = await connection.getLatestBlockhash();
 
     const tx = new Transaction({
@@ -78,6 +78,7 @@ export const payInvoice = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 export const confirmInvoicePayment = async (req, res) => {
   const { cid } = req.body;
