@@ -135,7 +135,7 @@ export default function Hero() {
           <h1 className="text-fuchsia-600 text-5xl font-bold mb-4">inVoice</h1>
         </div>
 
-        <div className="w-1/2">
+      <div className="w-full sm:w-4/5 md:w-3/4 lg:w-1/2 mx-auto">
           <TextGenerateEffect
             className="text-white text-[10px] md:text-xl lg:text-2xl"
             words="A decentralized marketplace for tokenized invoices, enabling instant liquidity for SMEs and returns for investors"

@@ -20,7 +20,7 @@ export default function Collections() {
         background: 'linear-gradient(to bottom, #7c3aed, #1f2937)',
       }}
     >
-      <h2 className="text-2xl font-semibold mb-6 text-white">#Top Collections (Mock Data)</h2>
+      <h2 className="text-2xl mt-20 font-semibold mb-6 text-white">#Top Collections (Mock Data)</h2>
 
       <div className="overflow-x-auto rounded-xl shadow-lg bg-gray-800/60 backdrop-blur-lg">
         <div className="hidden md:block">
