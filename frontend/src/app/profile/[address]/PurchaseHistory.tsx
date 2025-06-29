@@ -98,7 +98,7 @@ export default function PurchaseHistory() {
                     <td className="px-6 py-4">
                       {purchase.paid ? (
                         <span className="inline-block bg-green-500/20 text-green-400 px-3 py-1 text-xs font-semibold rounded-full">
-                          Paid
+                          Recieved
                         </span>
                       ) : (
                         <span className="inline-block bg-yellow-500/20 text-yellow-400 px-3 py-1 text-xs font-semibold rounded-full">

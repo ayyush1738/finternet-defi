@@ -98,24 +98,29 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
 
       <div className="px-10 pt-6 flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
+          <div className="hidden md:block md:w-16 md:h-16 rounded-full" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
           <div>
-            <div className="text-sm text-gray-300">
+            <div className="text-xs md:text-sm text-gray-300 break-all">
               {walletAddress}
             </div>
             <div className="text-sm text-gray-400">Wallet Owner</div>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-300">
+        <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 mt-4 md:mt-0">
+          <div className="hidden md:block md:text-sm text-gray-300">
             {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching balance...'}
           </div>
-          <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 rounded-full cursor-pointer" style={{ backgroundColor: getColorFromWallet(walletAddress) }} />
+          <div
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="w-8 h-8 md:w-10 md:h-10 rounded-full cursor-pointer"
+            style={{ backgroundColor: getColorFromWallet(walletAddress) }}
+          />
         </div>
+
       </div>
 
       {isDropdownOpen && (
-        <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mr-10">
+        <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 mr-10 mt-2">
           <div className="px-4 py-2 font-semibold border-b border-gray-700">
             {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
             <div className="text-sm text-gray-400">
@@ -157,8 +162,9 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
       </div>
 
       {/* Main Content */}
-      <div className="flex px-10 mt-6">
-        <div className="w-1/4">
+      <div className="flex flex-col md:flex-row px-4 md:px-10 mt-6 gap-6">
+        {/* Left Panel (Category - hidden on small screens) */}
+        <div className="w-full md:w-1/4 hidden md:block">
           <h2 className="text-lg font-semibold mb-2">Category</h2>
           <div className="flex flex-wrap gap-2 text-sm text-black cursor-not-allowed">
             {['All', 'Layer 1', 'Layer 2', 'Stablecoins', 'Smart Contract Platform', 'DeFi', 'AI', 'Pump.fun', 'Dog Themed'].map(cat => (
@@ -173,16 +179,16 @@ export default function Profile({ walletAddress }: { walletAddress: string }) {
           <div className="h-12 bg-gray-800 mb-4 rounded cursor-not-allowed" />
         </div>
 
-        <div className="w-3/4 pl-10">
+        {/* Right Panel */}
+        <div className="w-full md:w-3/4">
           <div className="bg-gray-800 h-10 rounded flex items-center px-4 text-gray-400">
             <FaSearch className="mr-2" />
-            <input className="bg-transparent outline-none w-full" placeholder="Search" />
+            <input className="bg-transparent outline-none w-full text-sm" placeholder="Search" />
           </div>
 
-          <div className="mt-10">
+          <div className="mt-6">
             {renderTabContent()}
           </div>
-
         </div>
       </div>
     </div>
