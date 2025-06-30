@@ -75,7 +75,7 @@ export default function PendingPayments() {
 
       const { transaction_base64 } = data;
 
-      const connection = new Connection('https://devnet.helius-rpc.com/?api-key=be8f1e5b-a9a6-4cd5-9338-c563b3ac43dd', 'confirmed');
+      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const tx = Transaction.from(Buffer.from(transaction_base64, 'base64'));
       const signedTx = await provider.signTransaction(tx);
       const txid = await connection.sendRawTransaction(signedTx.serialize());
