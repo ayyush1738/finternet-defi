@@ -171,17 +171,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-10 px-4">
       <div className="w-full px-4 pt-4 max-w-5xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          {/* Wallet Info */}
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div
-              className="w-14 h-14 rounded-full shrink-0"
-              style={{ backgroundColor: walletColor }}
-            ></div>
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-300 break-all md:break-words">{walletAddress}</span>
-              <span className="text-sm text-gray-400">Wallet Owner</span>
-            </div>
-          </div>
+    
 
           <div className="relative flex items-center justify-between w-full md:w-auto">
             <span className="text-sm text-gray-300 mr-4 md:mr-2">
