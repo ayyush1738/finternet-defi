@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { SiSolana } from 'react-icons/si';
-import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
+const { Connection, PublicKey, Transaction, Keypair } = await import('@solana/web3.js');
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
+
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -41,13 +43,31 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       }
     };
     fetchBalance();
+  }, [walletAddress]); useEffect(() => {
+    if (!walletAddress) return;
+    const fetchBalance = async () => {
+      try {
+        const { Connection, PublicKey } = await import('@solana/web3.js');
+        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+        const publicKey = new PublicKey(walletAddress);
+        const lamports = await connection.getBalance(publicKey);
+        setBalance(lamports / 1e9);
+      } catch (err) {
+        console.error('Balance fetch failed', err);
+      }
+    };
+    fetchBalance();
   }, [walletAddress]);
+
 
   const getColorFromWallet = (address: string) => {
     const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const colors = ['#F87171', '#60A5FA', '#34D399', '#FBBF24', '#A78BFA', '#F472B6'];
     return colors[hash % colors.length];
   };
+
+    const walletColor = useMemo(() => getColorFromWallet(walletAddress), [walletAddress]);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -106,10 +126,19 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
       const { ipfs_cid, transaction_base64 } = await uploadRes.json();
       const provider = (window as any).solana;
-      if (!provider || !provider.isPhantom) {
+      if (!provider?.isPhantom) {
         alert('Phantom Wallet not found');
         return;
       }
+      try {
+        if (!provider.isConnected) {
+          await provider.connect();
+        }
+      } catch (err) {
+        alert('Phantom Wallet connection failed');
+        return;
+      }
+
 
       await provider.connect();
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
@@ -160,7 +189,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
           <div className="flex items-center gap-4 w-full md:w-auto">
             <div
               className="w-14 h-14 rounded-full shrink-0"
-              style={{ backgroundColor: getColorFromWallet(walletAddress) }}
+              style={{ backgroundColor: walletColor }}
             ></div>
             <div className="flex flex-col">
               <span className="text-sm text-gray-300 break-all md:break-words">{walletAddress}</span>
@@ -175,7 +204,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="w-10 h-10 rounded-full shrink-0 cursor-pointer"
-              style={{ backgroundColor: getColorFromWallet(walletAddress) }}
+              style={{ backgroundColor: walletColor }}
             />
             {isDropdownOpen && (
               <div className="absolute right-0 top-14 w-56 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-50">
