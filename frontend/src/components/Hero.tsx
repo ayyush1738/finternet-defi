@@ -150,7 +150,6 @@ export default function Hero() {
     setStatus('');
     if (!walletAddress) {
       const address = await connectWallet();
-      if (!address) return; // Don't open modal if wallet connection failed
     }
     setShowModal(true);
   };
@@ -242,14 +241,14 @@ export default function Hero() {
               <button
                 onClick={handleEnterpriseLogin}
                 disabled={loadingNextPage || isConnecting || !organizationName.trim()}
-                className="flex-1 bg-gradient-to-br from-purple-600 to-green-500 px-6 py-2 rounded-lg font-semibold hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 bg-gradient-to-br from-purple-600 to-green-500 px-6 py-2 rounded-lg font-semibold hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loadingNextPage ? 'Redirecting...' : isConnecting ? 'Connecting...' : 'Proceed'}
               </button>
               <button
                 onClick={closeModal}
                 disabled={loadingNextPage}
-                className="px-6 py-2 rounded-lg border border-zinc-600 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-6 py-2 rounded-lg border border-zinc-600 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 Cancel
               </button>

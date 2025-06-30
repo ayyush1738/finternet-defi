@@ -5,7 +5,6 @@ import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { SiSolana } from 'react-icons/si';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-// ✅ Static imports - loaded once when component is imported
 import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
