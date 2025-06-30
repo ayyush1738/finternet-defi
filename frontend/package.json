@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "netlify build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -12,6 +13,7 @@
     "@bonfida/spl-name-service": "^3.0.10",
     "@metaplex-foundation/js": "^0.20.1",
     "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
+    "@netlify/next": "^1.4.9",
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.98.2",
     "chart.js": "^4.4.9",
