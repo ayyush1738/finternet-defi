@@ -35,7 +35,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       try {
         if (walletAddress) {
           const connection = new Connection(
-            'https://api.devnet.solana.com', // Replace with Helius RPC for production
+            'https://devnet.helius-rpc.com/?api-key=be8f1e5b-a9a6-4cd5-9338-c563b3ac43dd', 
             'confirmed'
           );
           const publicKey = new PublicKey(walletAddress);
@@ -114,7 +114,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       // Step 2: Sign with Phantom
       setMintingStep('Signing transaction...');
       await provider.connect();
-      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      const connection = new Connection('https://devnet.helius-rpc.com/?api-key=be8f1e5b-a9a6-4cd5-9338-c563b3ac43dd', 'confirmed');
       const transaction = Transaction.from(Buffer.from(transaction_base64, 'base64'));
 
       transaction.partialSign(mintKeypair);
