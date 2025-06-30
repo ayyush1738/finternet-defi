@@ -43,7 +43,7 @@ export default function Hero() {
       const address = response.publicKey.toString();
       setWalletAddress(address);
 
-      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+      const connection = new Connection("https://devnet.helius-rpc.com/?api-key=be8f1e5b-a9a6-4cd5-9338-c563b3ac43dd", "confirmed");
       const pubKey = new PublicKey(address);
       const lamports = await connection.getBalance(pubKey);
       const sol = lamports / 1e9;

@@ -15,7 +15,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   const [balance, setBalance] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [organizationName, setOrganizationName] = useState<string | null>(null);
-  const [mintingStep, setMintingStep] = useState('');
   const [isMinting, setIsMinting] = useState(false);
 
   const router = useRouter();
@@ -27,24 +26,18 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       alert('Unauthorized. Please login again.');
       router.push('/');
     }
-    if (org) setOrganizationName(org);
+    if (org) {
+      setOrganizationName(org);
+    }
   }, [router]);
 
   useEffect(() => {
     const fetchBalance = async () => {
-      try {
-        if (walletAddress) {
-          const connection = new Connection(
-            'https://devnet.helius-rpc.com/?api-key=be8f1e5b-a9a6-4cd5-9338-c563b3ac43dd', 
-            'confirmed'
-          );
-          const publicKey = new PublicKey(walletAddress);
-          const lamports = await connection.getBalance(publicKey);
-          setBalance(lamports / 1e9);
-        }
-      } catch (err) {
-        console.error('Balance fetch failed', err);
-        setBalance(null);
+      if (walletAddress) {
+        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+        const publicKey = new PublicKey(walletAddress);
+        const lamports = await connection.getBalance(publicKey);
+        setBalance(lamports / 1e9);
       }
     };
     fetchBalance();
@@ -57,8 +50,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       if (file.size > 50 * 1024 * 1024) {
         alert('File too large. Max 50MB allowed.');
         return;
@@ -68,23 +61,21 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   };
 
   const handleMint = async () => {
-    if (!fileName || !name || !price || !pubKey) {
+    if (!fileName || !name || !price) {
       alert('Please fill all required fields');
       return;
     }
 
     setIsMinting(true);
-    const mintKeypair = Keypair.generate();
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    const token = localStorage.getItem('jwt');
-    const provider = (window as any).solana;
 
     try {
-      if (!fileInput?.files?.[0]) throw new Error('No file selected');
-      if (!provider || !provider.isPhantom) throw new Error('Phantom Wallet not found');
+      const mintKeypair = Keypair.generate();
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      if (!fileInput.files || !fileInput.files[0]) {
+        alert('Please select a PDF file');
+        return;
+      }
 
-      // Step 1: Upload to backend
-      setMintingStep('Uploading file...');
       const formData = new FormData();
       formData.append('file', fileInput.files[0]);
       formData.append('amount', price);
@@ -96,6 +87,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       formData.append('description', description);
       formData.append('customer_pubkey', pubKey);
 
+
+      const token = localStorage.getItem('jwt');
       const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/upload`, {
         method: 'POST',
         headers: {
@@ -104,29 +97,30 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
         body: formData,
       });
 
+
+
       if (!uploadRes.ok) {
         const err = await uploadRes.json();
         throw new Error(err.message || 'Upload failed');
       }
 
       const { ipfs_cid, transaction_base64 } = await uploadRes.json();
+      const provider = (window as any).solana;
+      if (!provider || !provider.isPhantom) {
+        alert('Phantom Wallet not found');
+        return;
+      }
 
-      // Step 2: Sign with Phantom
-      setMintingStep('Signing transaction...');
       await provider.connect();
-      const connection = new Connection('https://devnet.helius-rpc.com/?api-key=be8f1e5b-a9a6-4cd5-9338-c563b3ac43dd', 'confirmed');
-      const transaction = Transaction.from(Buffer.from(transaction_base64, 'base64'));
+      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      const transactionBuffer = Buffer.from(transaction_base64, 'base64');
+      const transaction = Transaction.from(transactionBuffer);
 
-      transaction.partialSign(mintKeypair);
+      transaction.partialSign(mintKeypair); // Sign with mint authority
       const signedTx = await provider.signTransaction(transaction);
-
-      // Step 3: Submit to Solana
-      setMintingStep('Submitting to Solana...');
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      // Step 4: Finalize backend
-      setMintingStep('Finalizing NFT...');
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/finalize`, {
         method: 'POST',
         headers: {
@@ -141,14 +135,14 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
         }),
       });
 
-      alert(`✅ NFT Minted!\nTxID: ${txid}`);
+
+      alert(`✅ NFT Minted Successfully!\nTxID: ${txid}\nIPFS: https://ipfs.io/ipfs/${ipfs_cid}`);
       window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
     } catch (err: any) {
-      console.error('Minting error:', err);
+      console.error('Minting failed', err);
       alert(`Minting failed: ${err.message}`);
     } finally {
       setIsMinting(false);
-      setMintingStep('');
     }
   };
 
@@ -161,6 +155,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-10 px-4">
       <div className="w-full px-4 pt-4 max-w-5xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+
+          {/* Wallet Info */}
           <div className="flex items-center gap-4 w-full md:w-auto">
             <div
               className="w-14 h-14 rounded-full shrink-0"
@@ -185,7 +181,9 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
               <div className="absolute right-0 top-14 w-56 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-50">
                 <div className="px-4 py-3 text-sm font-medium border-b border-zinc-700 text-white">
                   {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
-                  <div className="text-xs text-gray-400">{balance !== null ? `${balance.toFixed(2)} SOL` : '$0.00'}</div>
+                  <div className="text-xs text-gray-400">
+                    {balance !== null ? `${balance.toFixed(2)} SOL` : '$0.00'}
+                  </div>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -198,6 +196,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
           </div>
         </div>
       </div>
+
 
       <h1 className="text-4xl font-bold mb-6">Mint PDF as NFT</h1>
 
@@ -218,7 +217,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
             <label className="block mb-1 text-sm">NFT Name</label>
             <input
               type="text"
-              className="w-full bg-zinc-700 rounded-lg px-4 py-2"
+              className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -228,7 +227,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
             <label className="block mb-1 text-sm">Description (optional)</label>
             <textarea
               rows={3}
-              className="w-full bg-zinc-700 rounded-lg px-4 py-2"
+              className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -246,6 +245,8 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
                   onChange={(e) => setPrice(e.target.value)}
                 />
                 <SiSolana className="ml-2 text-emerald-400" />
+
+
               </div>
             </div>
 
@@ -253,7 +254,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
               <label className="block mb-1 text-sm">Customer Public Key</label>
               <input
                 type="text"
-                className="w-full bg-zinc-700 rounded-lg px-4 py-2"
+                className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
                 placeholder="Enter Public Key of Your Client"
                 value={pubKey}
                 onChange={(e) => setPubKey(e.target.value)}
@@ -265,11 +266,12 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
         <button
           onClick={handleMint}
           disabled={!fileName || !name || !price || isMinting}
-          className="w-full bg-gradient-to-br from-purple-600 to-green-500 py-3 rounded-xl font-semibold text-lg hover:opacity-80 disabled:opacity-40"
+          className="w-full bg-gradient-to-br from-purple-600 to-green-500 py-3 rounded-xl font-semibold text-lg hover:opacity-80 disabled:opacity-40 cursor-pointer"
         >
-          {isMinting ? mintingStep || 'Minting...' : 'Mint'}
+          {isMinting ? 'Minting...' : 'Mint'}
         </button>
       </div>
     </div>
   );
 }
+
