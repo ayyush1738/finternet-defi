@@ -32,14 +32,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   }, [router]);
 
   useEffect(() => {
-    const token = localStorage.getItem('jwt');
-    if (!token) {
-      alert('Unauthorized. Please login again.');
-      router.push('/');
-    }
-  }, [router]);
-
-  useEffect(() => {
     const fetchBalance = async () => {
       if (walletAddress) {
         const connection = new Connection('https://api.devnet.solana.com', 'confirmed');

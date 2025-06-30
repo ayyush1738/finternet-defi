@@ -250,7 +250,7 @@ export default function WalletLogin() {
                 className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm disabled:opacity-50 cursor-pointer"
                 disabled={isLoggingIn}
               >
-                {isLoggingIn ? 'Logging in...' : 'Profile'}
+                {isLoggingIn ? 'Logging in...' : 'Login as Investor/Customer'}
               </button>
 
               <button onClick={disconnectWallet} className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer">
