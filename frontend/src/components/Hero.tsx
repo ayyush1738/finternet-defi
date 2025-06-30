@@ -22,6 +22,7 @@ export default function Hero() {
   const [showModal, setShowModal] = useState(false);
   const [organizationName, setOrganizationName] = useState('');
   const [loadingNextPage, setLoadingNextPage] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const router = useRouter();
 
   const getProvider = (): any | null => {
@@ -31,13 +32,14 @@ export default function Hero() {
     return null;
   };
 
-  const connectWallet = async () => {
+  const connectWallet = async (): Promise<string | null> => {
     const provider = getProvider();
     if (!provider || !provider.isPhantom) {
-      alert('Please install Phantom Wallet');
-      return;
+      setStatus('Please install Phantom Wallet');
+      return null;
     }
 
+    setIsConnecting(true);
     try {
       const response = await provider.connect();
       const address = response.publicKey.toString();
@@ -48,45 +50,72 @@ export default function Hero() {
       const lamports = await connection.getBalance(pubKey);
       const sol = lamports / 1e9;
       console.log(`Balance: ${sol} SOL`);
+      
+      setStatus('Wallet connected successfully');
+      return address; // ✅ Return the address for immediate use
     } catch (err) {
       console.error('Wallet connection failed', err);
+      setStatus('Wallet connection failed');
+      return null;
+    } finally {
+      setIsConnecting(false);
     }
   };
 
   const handleEnterpriseLogin = async () => {
-    if (!organizationName) {
+    if (!organizationName.trim()) {
       setStatus('Please enter organization name');
       return;
     }
 
-    if (!walletAddress) {
-      await connectWallet();
-      if (!walletAddress) {
-        setStatus('Connect wallet first');
+    setStatus(''); // Clear previous status
+    
+    // ✅ Get current wallet address or connect
+    let currentWalletAddress = walletAddress;
+    if (!currentWalletAddress) {
+      setStatus('Connecting wallet...');
+      currentWalletAddress = await connectWallet();
+      if (!currentWalletAddress) {
+        setStatus('Please connect your wallet first');
         return;
       }
     }
 
+    setStatus('Authenticating...');
 
     try {
-      const nonceRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/nonce?wallet_address=${walletAddress}`);
+      // Fetch nonce
+      const nonceRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/nonce?wallet_address=${currentWalletAddress}`
+      );
+      
+      if (!nonceRes.ok) {
+        throw new Error(`Failed to get nonce: ${nonceRes.status}`);
+      }
+      
       const nonceData: NonceResponse = await nonceRes.json();
       const { nonce } = nonceData;
 
+      // Sign message
       const provider = getProvider();
-      if (!provider) return;
+      if (!provider) {
+        throw new Error('Wallet provider not found');
+      }
 
+      setStatus('Please sign the message in your wallet...');
       const encodedMsg = new TextEncoder().encode(nonce);
       const signedMessage: SignedMessage = await provider.signMessage(encodedMsg, 'utf8');
 
+      // Submit login
+      setStatus('Verifying credentials...');
       const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/enterprise`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          wallet_address: walletAddress,
+          wallet_address: currentWalletAddress,
           nonce: nonce,
           signature: Array.from(signedMessage.signature),
-          username: organizationName,
+          username: organizationName.trim(),
         }),
       });
 
@@ -98,28 +127,38 @@ export default function Hero() {
           return;
         }
 
-        setStatus('Login successful');
+        setStatus('Login successful! Redirecting...');
         localStorage.setItem('jwt', data.token);
-        localStorage.setItem('organizationName', organizationName);
+        localStorage.setItem('organizationName', organizationName.trim());
 
-        setLoadingNextPage(true); 
-        setTimeout(() => {
-          setShowModal(false);
-          router.push(`/enterprise/${walletAddress}`);
-        }, 500); 
+        setLoadingNextPage(true);
+        
+        // ✅ Remove setTimeout - redirect immediately
+        setShowModal(false);
+        router.push(`/enterprise/${currentWalletAddress}`);
       } else {
-        setStatus(`${data.message}`);
+        setStatus(data.message || 'Login failed');
       }
 
     } catch (err: any) {
-      console.error(err);
-      setStatus(`Login error: ${err.message}`);
+      console.error('Login error:', err);
+      setStatus(`Login error: ${err.message || 'Unknown error occurred'}`);
     }
   };
 
   const openModal = async () => {
-    await connectWallet();
+    setStatus('');
+    if (!walletAddress) {
+      const address = await connectWallet();
+      if (!address) return; // Don't open modal if wallet connection failed
+    }
     setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setStatus('');
+    setLoadingNextPage(false);
   };
 
   return (
@@ -135,7 +174,7 @@ export default function Hero() {
           <h1 className="text-fuchsia-600 text-5xl font-bold mb-4">inVoice</h1>
         </div>
 
-      <div className="w-full sm:w-4/5 md:w-3/4 lg:w-1/2 mx-auto">
+        <div className="w-full sm:w-4/5 md:w-3/4 lg:w-1/2 mx-auto">
           <TextGenerateEffect
             className="text-white text-[10px] md:text-xl lg:text-2xl"
             words="A decentralized marketplace for tokenized invoices, enabling instant liquidity for SMEs and returns for investors"
@@ -144,6 +183,7 @@ export default function Hero() {
           {loadingNextPage && (
             <div className="mb-4">
               <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-white text-sm mt-2">Redirecting...</p>
             </div>
           )}
 
@@ -169,6 +209,8 @@ export default function Hero() {
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-purple-500"
                 value={organizationName}
                 onChange={(e) => setOrganizationName(e.target.value)}
+                placeholder="Enter your organization name"
+                disabled={loadingNextPage || isConnecting}
               />
             </div>
 
@@ -179,26 +221,43 @@ export default function Hero() {
                 value={walletAddress || ''}
                 readOnly
                 className="w-full bg-zinc-700 rounded-lg px-4 py-2 text-zinc-400"
+                placeholder={isConnecting ? "Connecting..." : "Wallet will appear here"}
               />
             </div>
 
-            <div className="flex justify-between">
+            {/* ✅ Display status messages to user */}
+            {status && (
+              <div className={`text-sm p-2 rounded ${
+                status.includes('error') || status.includes('failed') || status.includes('denied')
+                  ? 'bg-red-500/20 text-red-300'
+                  : status.includes('successful')
+                  ? 'bg-green-500/20 text-green-300'
+                  : 'bg-blue-500/20 text-blue-300'
+              }`}>
+                {status}
+              </div>
+            )}
+
+            <div className="flex justify-between gap-4">
               <button
                 onClick={handleEnterpriseLogin}
-                className="bg-gradient-to-br from-purple-600 to-green-500 px-6 py-2 rounded-lg font-semibold hover:opacity-80 cursor-pointer"
+                disabled={loadingNextPage || isConnecting || !organizationName.trim()}
+                className="flex-1 bg-gradient-to-br from-purple-600 to-green-500 px-6 py-2 rounded-lg font-semibold hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Proceed
+                {loadingNextPage ? 'Redirecting...' : isConnecting ? 'Connecting...' : 'Proceed'}
               </button>
               <button
-                onClick={() => setShowModal(false)}
-                className="px-6 py-2 rounded-lg border border-zinc-600 hover:bg-zinc-700 cursor-pointer"
+                onClick={closeModal}
+                disabled={loadingNextPage}
+                className="px-6 py-2 rounded-lg border border-zinc-600 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
             </div>
-            {loadingNextPage && (
-              <div className="mb-4">
-                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+
+            {(loadingNextPage || isConnecting) && (
+              <div className="flex justify-center">
+                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />
               </div>
             )}
           </div>

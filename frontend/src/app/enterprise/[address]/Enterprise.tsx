@@ -1,12 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { AiOutlineCloudUpload } from 'react-icons/ai';
+import { useEffect, useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { SiSolana } from 'react-icons/si';
-const { Connection, PublicKey, Transaction, Keypair } = await import('@solana/web3.js');
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
 
+const AiOutlineCloudUpload = dynamic(() => import('react-icons/ai').then(mod => mod.AiOutlineCloudUpload));
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -23,42 +22,24 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
-    const org = localStorage.getItem('organizationName');
+    const org = localStorage.getItem('organizationName'); 
     if (!token) {
       alert('Unauthorized. Please login again.');
       router.push('/');
     }
-    if (org) {
-      setOrganizationName(org);
-    }
+    if (org) setOrganizationName(org);
   }, [router]);
 
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (walletAddress) {
-        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-        const publicKey = new PublicKey(walletAddress);
-        const lamports = await connection.getBalance(publicKey);
-        setBalance(lamports / 1e9);
-      }
-    };
-    fetchBalance();
-  }, [walletAddress]); useEffect(() => {
     if (!walletAddress) return;
-    const fetchBalance = async () => {
-      try {
-        const { Connection, PublicKey } = await import('@solana/web3.js');
-        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-        const publicKey = new PublicKey(walletAddress);
-        const lamports = await connection.getBalance(publicKey);
-        setBalance(lamports / 1e9);
-      } catch (err) {
-        console.error('Balance fetch failed', err);
-      }
-    };
-    fetchBalance();
+    (async () => {
+      const { Connection, PublicKey } = await import('@solana/web3.js');
+      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      const publicKey = new PublicKey(walletAddress);
+      const lamports = await connection.getBalance(publicKey);
+      setBalance(lamports / 1e9);
+    })();
   }, [walletAddress]);
-
 
   const getColorFromWallet = (address: string) => {
     const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -66,8 +47,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     return colors[hash % colors.length];
   };
 
-    const walletColor = useMemo(() => getColorFromWallet(walletAddress), [walletAddress]);
-
+  const walletColor = useMemo(() => getColorFromWallet(walletAddress), [walletAddress]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -89,6 +69,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     setIsMinting(true);
 
     try {
+      const { Keypair, Transaction, Connection, PublicKey } = await import('@solana/web3.js');
       const mintKeypair = Keypair.generate();
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (!fileInput.files || !fileInput.files[0]) {
@@ -107,63 +88,37 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
       formData.append('description', description);
       formData.append('customer_pubkey', pubKey);
 
-
       const token = localStorage.getItem('jwt');
-      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/upload`, {
+      const uploadRes = await fetch('http://localhost:8000/api/v1/enterprise/upload', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token || ''}`,
-        },
+        headers: { Authorization: `Bearer ${token || ''}` },
         body: formData,
       });
 
-
-
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json();
-        throw new Error(err.message || 'Upload failed');
-      }
+      if (!uploadRes.ok) throw new Error((await uploadRes.json()).message || 'Upload failed');
 
       const { ipfs_cid, transaction_base64 } = await uploadRes.json();
       const provider = (window as any).solana;
-      if (!provider?.isPhantom) {
-        alert('Phantom Wallet not found');
-        return;
-      }
-      try {
-        if (!provider.isConnected) {
-          await provider.connect();
-        }
-      } catch (err) {
-        alert('Phantom Wallet connection failed');
-        return;
-      }
+      if (!provider?.isPhantom) return alert('Phantom Wallet not found');
+      if (!provider.isConnected) await provider.connect();
 
-
-      await provider.connect();
       const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
       const transactionBuffer = Buffer.from(transaction_base64, 'base64');
       const transaction = Transaction.from(transactionBuffer);
 
-      transaction.partialSign(mintKeypair); // Sign with mint authority
+      transaction.partialSign(mintKeypair);
       const signedTx = await provider.signTransaction(transaction);
       const txid = await connection.sendRawTransaction(signedTx.serialize());
       await connection.confirmTransaction(txid, 'confirmed');
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/finalize`, {
+      await fetch('http://localhost:8000/api/v1/enterprise/finalize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token || ''}`,
         },
-        body: JSON.stringify({
-          cid: ipfs_cid,
-          creator: walletAddress,
-          tx_sig: txid,
-          amount: price,
-        }),
+        body: JSON.stringify({ cid: ipfs_cid, creator: walletAddress, tx_sig: txid, amount: price }),
       });
-
 
       alert(`✅ NFT Minted Successfully!\nTxID: ${txid}\nIPFS: https://ipfs.io/ipfs/${ipfs_cid}`);
       window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
@@ -182,50 +137,41 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-10 px-4">
-      <div className="w-full px-4 pt-4 max-w-5xl">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-
-          {/* Wallet Info */}
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div
-              className="w-14 h-14 rounded-full shrink-0"
-              style={{ backgroundColor: walletColor }}
-            ></div>
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-300 break-all md:break-words">{walletAddress}</span>
-              <span className="text-sm text-gray-400">Wallet Owner</span>
-            </div>
-          </div>
-
-          <div className="relative flex items-center justify-between w-full md:w-auto">
-            <span className="text-sm text-gray-300 mr-4 md:mr-2">
-              {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching...'}
-            </span>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-10 h-10 rounded-full shrink-0 cursor-pointer"
-              style={{ backgroundColor: walletColor }}
-            />
-            {isDropdownOpen && (
-              <div className="absolute right-0 top-14 w-56 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-50">
-                <div className="px-4 py-3 text-sm font-medium border-b border-zinc-700 text-white">
-                  {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
-                  <div className="text-xs text-gray-400">
-                    {balance !== null ? `${balance.toFixed(2)} SOL` : '$0.00'}
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-zinc-700 cursor-pointer"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+      <div className="px-10 pt-6 flex justify-between items-center w-full max-w-5xl">
+        <div className="flex items-center space-x-4">
+          <div className="w-16 h-16 rounded-full" style={{ backgroundColor: walletColor }} />
+          <div>
+            <div className="text-sm text-gray-300">{walletAddress}</div>
+            <div className="text-sm text-gray-400">Wallet Owner</div>
           </div>
         </div>
+        <div className="flex items-center space-x-4 relative">
+          <div className="text-sm text-gray-300">
+            {balance !== null ? `${balance.toFixed(2)} SOL` : 'Fetching balance...'}
+          </div>
+          <div
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="w-10 h-10 rounded-full cursor-pointer"
+            style={{ backgroundColor: walletColor }}
+          />
+          {isDropdownOpen && (
+            <div className="absolute right-0 w-56 bg-gray-900 text-white rounded-md shadow-lg z-50 top-12">
+              <div className="px-4 py-2 font-semibold border-b border-gray-700">
+                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                <div className="text-sm text-gray-400">
+                  {balance !== null ? `${balance.toFixed(2)} SOL` : '$0.00'}
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-red-500 cursor-pointer"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-
 
       <h1 className="text-4xl font-bold mb-6">Mint PDF as NFT</h1>
 
@@ -274,8 +220,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
                   onChange={(e) => setPrice(e.target.value)}
                 />
                 <SiSolana className="ml-2 text-emerald-400" />
-
-
               </div>
             </div>
 
@@ -303,4 +247,3 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     </div>
   );
 }
-
