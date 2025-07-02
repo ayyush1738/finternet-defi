@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { SiSolana } from 'react-icons/si';
 import { useRouter } from 'next/navigation';
@@ -31,29 +31,30 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     }
   }, [router]);
 
-  useEffect(() => {
+  const fetchBalance = useCallback(async () => {
     if (!walletAddress) return;
-
-    const fetchBalance = async () => {
-      try {
-        const response = await fetch('/api/solana', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ walletAddress }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setBalance(data.balance);
-        } else {
-          throw new Error(data.error || 'Failed to fetch balance');
-        }
-      } catch (err) {
-        console.error('Balance fetch failed', err);
+    try {
+      const response = await fetch('/api/solana', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setBalance(data.balance);
+      } else {
+        throw new Error(data.error || 'Failed to fetch balance');
       }
-    };
-
-    fetchBalance();
+    } catch (err) {
+      console.error('Balance fetch failed', err);
+    }
   }, [walletAddress]);
+
+  useEffect(() => {
+    fetchBalance();
+    const timer = setInterval(fetchBalance, 30000); // Refresh balance every 30 seconds
+    return () => clearInterval(timer); // Cleanup
+  }, [fetchBalance]);
 
   const getColorFromWallet = (address: string) => {
     const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -75,96 +76,86 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   };
 
   const handleMint = async () => {
-    if (!fileName || !name || !price) {
-      alert('Please fill all required fields');
+    if (!fileName || !name || !price || balance === null || balance < 0.01) {
+      alert('Please fill all required fields or insufficient SOL. Need at least 0.01 SOL.');
       return;
     }
-
     setIsMinting(true);
-
-    try {
-      // Dynamically import @solana/web3.js only when needed
-      const { Connection, Keypair, Transaction, PublicKey } = await import('@solana/web3.js');
-
-      const mintKeypair = Keypair.generate();
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      if (!fileInput.files || !fileInput.files[0]) {
-        alert('Please select a PDF file');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-      formData.append('amount', price);
-      formData.append('due_ts', Math.floor(Date.now() / 1000).toString());
-      formData.append('creator', walletAddress);
-      formData.append('mint', mintKeypair.publicKey.toString());
-      formData.append('name', name);
-      formData.append('organization', organizationName || '');
-      formData.append('description', description);
-      formData.append('customer_pubkey', pubKey);
-
-      const token = localStorage.getItem('jwt');
-      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/upload`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token || ''}`,
-        },
-        body: formData,
-      });
-
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json();
-        throw new Error(err.message || 'Upload failed');
-      }
-
-      const { ipfs_cid, transaction_base64 } = await uploadRes.json();
-      const provider = (window as any).solana;
-      if (!provider?.isPhantom) {
-        alert('Phantom Wallet not found');
-        return;
-      }
-
+    let attempts = 0;
+    const maxAttempts = 3;
+    while (attempts < maxAttempts) {
       try {
-        if (!provider.isConnected) {
-          await provider.connect();
+        const { Connection, Keypair, Transaction, PublicKey } = await import('@solana/web3.js');
+        const mintKeypair = Keypair.generate();
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+        if (!fileInput.files || !fileInput.files[0]) {
+          alert('Please select a PDF file');
+          return;
         }
-      } catch (err) {
-        alert('Phantom Wallet connection failed');
-        return;
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('amount', price);
+        formData.append('due_ts', Math.floor(Date.now() / 1000).toString());
+        formData.append('creator', walletAddress);
+        formData.append('mint', mintKeypair.publicKey.toString());
+        formData.append('name', name);
+        formData.append('organization', organizationName || '');
+        formData.append('description', description);
+        formData.append('customer_pubkey', pubKey);
+
+        const token = localStorage.getItem('jwt');
+        const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token || ''}` },
+          body: formData,
+        });
+
+        if (!uploadRes.ok) throw new Error((await uploadRes.json()).message || 'Upload failed');
+        const { ipfs_cid, transaction_base64 } = await uploadRes.json();
+
+        const provider = (window as any).solana;
+        if (!provider?.isPhantom) {
+          alert('Phantom Wallet not found');
+          return;
+        }
+
+        if (!provider.isConnected) await provider.connect();
+        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+        const transactionBuffer = Buffer.from(transaction_base64, 'base64');
+        let transaction = Transaction.from(transactionBuffer);
+
+        // Fetch fresh blockhash
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+        transaction.recentBlockhash = blockhash;
+        transaction.lastValidBlockHeight = lastValidBlockHeight;
+        transaction.partialSign(mintKeypair);
+
+        const signedTx = await provider.signTransaction(transaction);
+        const txid = await connection.sendRawTransaction(signedTx.serialize());
+        await connection.confirmTransaction(txid, 'confirmed');
+
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/finalize`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
+          body: JSON.stringify({ cid: ipfs_cid, creator: walletAddress, tx_sig: txid, amount: price }),
+        });
+
+        alert(`✅ NFT Minted Successfully!\nTxID: ${txid}`);
+        window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
+        break; // Exit loop on success
+      } catch (err: any) {
+        if (err.message.includes('Blockhash not found') && attempts < maxAttempts - 1) {
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+          continue;
+        }
+        console.error('Minting failed', err);
+        alert(`Minting failed: ${err.message}`);
+        throw err; // Re-throw to exit on non-blockhash errors
+      } finally {
+        setIsMinting(false);
       }
-
-      await provider.connect();
-      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-      const transactionBuffer = Buffer.from(transaction_base64, 'base64');
-      const transaction = Transaction.from(transactionBuffer);
-
-      transaction.partialSign(mintKeypair);
-      const signedTx = await provider.signTransaction(transaction);
-      const txid = await connection.sendRawTransaction(signedTx.serialize());
-      await connection.confirmTransaction(txid, 'confirmed');
-
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/enterprise/finalize`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token || ''}`,
-        },
-        body: JSON.stringify({
-          cid: ipfs_cid,
-          creator: walletAddress,
-          tx_sig: txid,
-          amount: price,
-        }),
-      });
-
-      alert(`✅ NFT Minted Successfully!\nTxID: ${txid}`);
-      window.open(`https://explorer.solana.com/tx/${txid}?cluster=devnet`, '_blank');
-    } catch (err: any) {
-      console.error('Minting failed', err);
-      alert(`Minting failed: ${err.message}`);
-    } finally {
-      setIsMinting(false);
     }
   };
 
