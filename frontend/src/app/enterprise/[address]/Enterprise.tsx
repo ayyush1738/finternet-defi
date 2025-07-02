@@ -5,7 +5,6 @@ import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { SiSolana } from 'react-icons/si';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { Connection, PublicKey, Transaction, Keypair } from '@solana/web3.js';
 
 export default function MintPdfNFT({ walletAddress }: { walletAddress: string }) {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -34,19 +33,25 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
 
   useEffect(() => {
     if (!walletAddress) return;
-    
+
     const fetchBalance = async () => {
       try {
-        // ✅ No more dynamic import - uses static import
-        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-        const publicKey = new PublicKey(walletAddress);
-        const lamports = await connection.getBalance(publicKey);
-        setBalance(lamports / 1e9);
+        const response = await fetch('/api/solana', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setBalance(data.balance);
+        } else {
+          throw new Error(data.error || 'Failed to fetch balance');
+        }
       } catch (err) {
         console.error('Balance fetch failed', err);
       }
     };
-    
+
     fetchBalance();
   }, [walletAddress]);
 
@@ -70,7 +75,6 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
   };
 
   const handleMint = async () => {
-    // ✅ No more dynamic import - uses static import
     if (!fileName || !name || !price) {
       alert('Please fill all required fields');
       return;
@@ -79,6 +83,9 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
     setIsMinting(true);
 
     try {
+      // Dynamically import @solana/web3.js only when needed
+      const { Connection, Keypair, Transaction, PublicKey } = await import('@solana/web3.js');
+
       const mintKeypair = Keypair.generate();
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (!fileInput.files || !fileInput.files[0]) {
@@ -117,7 +124,7 @@ export default function MintPdfNFT({ walletAddress }: { walletAddress: string })
         alert('Phantom Wallet not found');
         return;
       }
-      
+
       try {
         if (!provider.isConnected) {
           await provider.connect();
