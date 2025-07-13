@@ -1,3 +1,7 @@
+'use client';
+
+import React from 'react';
+
 export default function Collections() {
   const purchases = [
     { id: 'INV-101', date: '2025-05-01', owner: 'Tesla', amount: '3.0 SOL', invoiceUrl: '/invoices/INV-101.pdf' },
@@ -15,85 +19,81 @@ export default function Collections() {
 
   return (
     <div
-      className="pt-96 p-20 text-white h-auto"
+      className="py-32 px-6 md:px-20 text-white min-h-screen"
       style={{
         background: 'linear-gradient(to bottom, #7c3aed, #1f2937)',
       }}
     >
-      <h2 className="text-2xl mt-20 font-semibold mb-6 text-white">#Top Collections (Mock Data)</h2>
+      <h2 className="text-3xl font-bold mt-80 mb-8 text-white">📦 Top Collections (Mock Data)</h2>
 
-      <div className="overflow-x-auto rounded-xl shadow-lg bg-gray-800/60 backdrop-blur-lg">
-        <div className="hidden md:block">
-          <table className="min-w-full text-sm text-left text-gray-300">
-            <thead className="bg-gray-900/80 sticky top-0 z-10">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-gray-900/60 rounded-xl shadow-lg overflow-hidden backdrop-blur ">
+        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+          <table className="min-w-full text-sm text-left text-gray-200">
+            <thead className="bg-gray-800 sticky top-0 z-10 text-xs uppercase text-gray-300 tracking-wider">
               <tr>
-                <th className="px-6 py-3">Invoice ID</th>
-                <th className="px-6 py-3">Date Uploaded</th>
-                <th className="px-6 py-3">Owner</th>
-                <th className="px-6 py-3">Amount</th>
-                <th className="px-6 py-3">Profit</th>
-                <th className="px-6 py-3">Invoice</th>
+                <th className="px-6 py-4">Invoice ID</th>
+                <th className="px-6 py-4">Date Uploaded</th>
+                <th className="px-6 py-4">Owner</th>
+                <th className="px-6 py-4">Amount</th>
+                <th className="px-6 py-4">Profit</th>
+                <th className="px-6 py-4">Invoice</th>
               </tr>
             </thead>
+            <tbody className="divide-y divide-gray-700">
+              {purchases.map((p, i) => (
+                <tr key={i} className="hover:bg-gray-800 transition duration-200 ease-in-out">
+                  <td className="px-6 py-4 font-medium">{p.id}</td>
+                  <td className="px-6 py-4">{p.date}</td>
+                  <td className="px-6 py-4">{p.owner}</td>
+                  <td className="px-6 py-4">{p.amount}</td>
+                  <td className="px-6 py-4">2.5</td>
+                  <td className="px-6 py-4">
+                    <a
+                      href={p.invoiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-md shadow-sm"
+                    >
+                      View PDF
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
-
-          <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-            <table className="min-w-full text-sm text-left text-gray-300">
-              <tbody>
-                {purchases.map((p, i) => (
-                  <tr key={i} className="hover:bg-gray-700/50 transition duration-200">
-                    <td className="px-6 py-4">{p.id}</td>
-                    <td className="px-6 py-4">{p.date}</td>
-                    <td className="px-6 py-4">{p.owner}</td>
-                    <td className="px-6 py-4">{p.amount}</td>
-                    <td className="px-6 py-4">2.5</td>
-                    <td className="px-6 py-4">
-                      <a
-                        href={p.invoiceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow"
-                      >
-                        View PDF
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
+      </div>
 
-        {/* Mobile Cards */}
-        <div className="md:hidden p-4 max-h-[600px] overflow-y-auto space-y-4 custom-scrollbar">
-          {purchases.map((p, i) => (
-            <div key={i} className="bg-gray-700/40 rounded-lg p-4 shadow-md">
-              <div className="mb-2">
-                <span className="font-semibold">Invoice ID:</span> {p.id}
-              </div>
-              <div className="mb-2">
-                <span className="font-semibold">Date:</span> {p.date}
-              </div>
-              <div className="mb-2">
-                <span className="font-semibold">Owner:</span> {p.owner}
-              </div>
-              <div className="mb-2">
-                <span className="font-semibold">Amount:</span> {p.amount}
-              </div>
-              <div className="mb-2">
-                <span className="font-semibold">Profit:</span> 2.5
-              </div>
-              <a
-                href={p.invoiceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow"
-              >
-                View PDF
-              </a>
+      {/* Mobile Cards - Scrollable */}
+      <div className="md:hidden max-h-[500px] overflow-y-auto space-y-4 mt-6 custom-scrollbar">
+        {purchases.map((p, i) => (
+          <div
+            key={i}
+            className="bg-gray-800/70 rounded-xl p-4 shadow-lg backdrop-blur border border-gray-700"
+          >
+            <div className="grid grid-cols-2 gap-y-2 text-sm">
+              <span className="font-semibold text-gray-300">Invoice ID:</span>
+              <span>{p.id}</span>
+              <span className="font-semibold text-gray-300">Date:</span>
+              <span>{p.date}</span>
+              <span className="font-semibold text-gray-300">Owner:</span>
+              <span>{p.owner}</span>
+              <span className="font-semibold text-gray-300">Amount:</span>
+              <span>{p.amount}</span>
+              <span className="font-semibold text-gray-300">Profit:</span>
+              <span>2.5</span>
             </div>
-          ))}
-        </div>
+            <a
+              href={p.invoiceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-md shadow"
+            >
+              View PDF
+            </a>
+          </div>
+        ))}
       </div>
     </div>
   );

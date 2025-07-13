@@ -126,10 +126,6 @@ export default function WalletLogin() {
       const data: LoginResponse = await loginRes.json();
 
       if (loginRes.ok) {
-        if (data.role !== 'investor') {
-          setStatus('Access denied: Only investors can login');
-          return;
-        }
 
         setStatus('Login successful');
         setToken(data.token);

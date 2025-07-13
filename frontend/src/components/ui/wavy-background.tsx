@@ -1,3 +1,5 @@
+'use client';
+
 import { cn } from '@/libs/utils';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createNoise3D } from 'simplex-noise';

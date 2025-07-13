@@ -55,7 +55,7 @@ export default function OnDemandOffset() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row absolute m-5 gap-8">
+    <div className="flex flex-col md:flex-row absolute m-4 gap-8">
       <div className="ml-0 md:ml-20">
         <h2 className="text-4xl font-bold mb-4">On-Chain Verification</h2>
         <p className="text-lg mb-8">
@@ -79,7 +79,7 @@ export default function OnDemandOffset() {
         </div>
       </div>
 
-      <div className="hidden md:block bg-black/50 border border-gray-700 rounded-xl p-6 w-full md:w-1/2 ml-0 md:ml-30 h-80 relative">
+      <div className="hidden md:block bg-black/50 border border-gray-700 rounded-xl p-6 mr-20 w-full md:w-1/2 ml-0 md:ml-30 h-80 relative">
         <h3 className="text-lg font-semibold mb-2">Tokenization Real Time Tracking</h3>
         <p className="text-sm text-gray-400 mb-3">Average credits Used</p>
         <button className="text-green-400 text-xs mb-5">(Mock)Historic Data</button>
