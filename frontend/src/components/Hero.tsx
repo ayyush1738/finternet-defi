@@ -163,7 +163,7 @@ export default function Hero() {
   return (
     <div className="relative h-screen overflow-hidden w-full">
       <div className="z-10 absolute inset-0">
-        <WavyBackground backgroundFill="#020009" />
+        {/* <WavyBackground backgroundFill="#020009" /> */}
       </div>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10" />
 
