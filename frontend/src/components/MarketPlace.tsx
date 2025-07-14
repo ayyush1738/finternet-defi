@@ -172,7 +172,7 @@ export default function Market() {
       </div>
 
       {/* Mobile Cards */}
-      <div className="md:hidden space-y-4 mt-6 max-h-[600px] overflow-y-auto rounded-xl custom-scrollbar backdrop-blur bg-gray-800/60 p-2">
+      <div className="md:hidden space-y-4 mt-6 max-h-[600px] overflow-y-auto rounded-xl custom-scrollbar backdrop-blur p-2">
         {invoices.length === 0 ? (
           <div className="text-center text-gray-400">No data available</div>
         ) : (

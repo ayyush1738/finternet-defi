@@ -168,9 +168,12 @@ export default function Hero() {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10" />
 
       <div className="relative z-20 flex flex-col items-center justify-center h-full w-full text-center px-4">
-        <div className="flex">
+        {/* <div className="flex">
           <h1 className="text-white text-5xl font-bold mb-4">Cha</h1>
           <h1 className="text-fuchsia-600 text-5xl font-bold mb-4">inVoice</h1>
+        </div> */}
+        <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-full px-4 py-2 text-sm font-medium mb-8">
+            <span>Built on Solana Devnet</span>
         </div>
 
         <div className="w-full sm:w-4/5 md:w-3/4 lg:w-1/2 mx-auto">

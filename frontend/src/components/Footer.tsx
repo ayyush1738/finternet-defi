@@ -6,7 +6,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-700 pb-6">
         
         <div className="mb-6 md:mb-0">
-          <h3 className="text-white font-bold text-lg">ChaInvoice</h3>
+          <div className="flex">
+            <h1 className="text-white font-bold mb-4">Cha</h1>
+            <h1 className="text-fuchsia-600 font-bold mb-4">inVoice</h1>
+          </div>
           <p className="text-sm mt-2">Empowering Enterprises with decentralized finance.</p>
         </div>
 

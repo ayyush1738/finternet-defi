@@ -66,7 +66,7 @@ export default function Collections() {
       </div>
 
       {/* Mobile Cards - Scrollable */}
-      <div className="md:hidden max-h-[500px] overflow-y-auto space-y-4 mt-6 custom-scrollbar">
+      <div className="md:hidden space-y-4 mt-6 max-h-[600px] overflow-y-auto rounded-xl custom-scrollbar backdrop-blur p-2">
         {purchases.map((p, i) => (
           <div
             key={i}
