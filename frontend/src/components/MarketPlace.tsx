@@ -97,79 +97,87 @@ export default function Market() {
       <section className="mb-8 ml-6 text-gray-400">Invoices will be listed here after the mint</section>
 
       {/* Desktop Table */}
-      <div className="hidden md:block bg-gray-900/60 rounded-xl shadow-lg backdrop-blur">
-        <div className="max-h-[480px] overflow-y-auto custom-scrollbar rounded-xl">
-          <table className="min-w-full table-auto text-sm text-left text-gray-300">
+      <div className="hidden md:block bg-gray-900/60 shadow-lg backdrop-blur rounded-xl overflow-hidden">
+        <div className="w-full">
+          {/* Sticky header with top rounded corners */}
+          <table className="min-w-full text-sm text-left text-gray-300 table-fixed rounded-t-xl overflow-hidden">
             <thead className="bg-gray-800 sticky top-0 z-10 text-xs uppercase text-gray-400 tracking-wider">
               <tr>
-                <th className="px-6 py-4">Invoice ID</th>
-                <th className="px-6 py-4">Date Uploaded</th>
-                <th className="px-6 py-4">Owner</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Profit</th>
-                <th className="px-6 py-4">Invoice</th>
-                <th className="px-6 py-4">Tx</th>
-                <th className="px-6 py-4">Purchase</th>
+                <th className="px-6 py-4 w-1/8">Invoice ID</th>
+                <th className="px-6 py-4 w-1/8">Date Uploaded</th>
+                <th className="px-6 py-4 w-1/8">Owner</th>
+                <th className="px-6 py-4 w-1/8">Amount</th>
+                <th className="px-6 py-4 w-1/8">Profit</th>
+                <th className="px-6 py-4 w-1/8">Invoice</th>
+                <th className="px-6 py-4 w-1/8">Tx</th>
+                <th className="px-6 py-4 w-1/8">Purchase</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
-              {invoices.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-8 text-gray-400">
-                    No data available
-                  </td>
-                </tr>
-              ) : (
-                invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-gray-800 transition duration-200">
-                    <td className="px-6 py-4 font-medium">INV-{inv.id}</td>
-                    <td className="px-6 py-4">{new Date(inv.created_at).toLocaleDateString()}</td>
-                    <td className="px-6 py-4">{inv.username}</td>
-                    <td className="px-6 py-4">{inv.amount} SOL</td>
-                    <td className="px-6 py-4">
-                      {inv.inv_amount && solPrice
-                        ? `${((inv.inv_amount / solPrice) - inv.amount).toFixed(4)} SOL`
-                        : '...'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <a
-                        href={`https://ipfs.io/ipfs/${inv.cid}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow"
-                      >
-                        View PDF
-                      </a>
-                    </td>
-                    <td className="px-6 py-4">
-                      <a
-                        href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-emerald-400 underline text-xs"
-                      >
-                        View Tx
-                      </a>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => handlePurchase(inv)}
-                        disabled={inv.investor_pubkey}
-                        className={`${inv.investor_pubkey
-                          ? 'bg-gray-500 cursor-not-allowed'
-                          : 'bg-emerald-500 hover:bg-emerald-600'
-                          } text-white text-xs font-semibold px-3 py-1 rounded shadow`}
-                      >
-                        {inv.investor_pubkey ? 'Sold' : 'Buy'}
-                      </button>
+          </table>
+
+          {/* Scrollable body with bottom rounded corners */}
+          <div className="max-h-[480px] overflow-y-auto custom-scrollbar">
+            <table className="min-w-full text-sm text-left text-gray-300 table-fixed rounded-b-xl overflow-hidden">
+              <tbody className="divide-y divide-gray-700">
+                {invoices.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-gray-400">
+                      No data available
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  invoices.map((inv) => (
+                    <tr key={inv.id} className="hover:bg-gray-800 transition duration-200">
+                      <td className="px-6 py-4 w-1/8 font-medium">INV-{inv.id}</td>
+                      <td className="px-6 py-4 w-1/8">{new Date(inv.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 w-1/8">{inv.username}</td>
+                      <td className="px-6 py-4 w-1/8">{inv.amount} SOL</td>
+                      <td className="px-6 py-4 w-1/8">
+                        {inv.inv_amount && solPrice
+                          ? `${((inv.inv_amount / solPrice) - inv.amount).toFixed(4)} SOL`
+                          : '...'}
+                      </td>
+                      <td className="px-6 py-4 w-1/8">
+                        <a
+                          href={`https://ipfs.io/ipfs/${inv.cid}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded shadow"
+                        >
+                          View PDF
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 w-1/8">
+                        <a
+                          href={`https://explorer.solana.com/tx/${inv.tx_sig}?cluster=devnet`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-emerald-400 underline text-xs"
+                        >
+                          View Tx
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 w-1/8">
+                        <button
+                          onClick={() => handlePurchase(inv)}
+                          disabled={inv.investor_pubkey}
+                          className={`${inv.investor_pubkey
+                            ? 'bg-gray-500 cursor-not-allowed'
+                            : 'bg-emerald-500 hover:bg-emerald-600'
+                            } text-white text-xs font-semibold px-3 py-1 rounded shadow`}
+                        >
+                          {inv.investor_pubkey ? 'Sold' : 'Buy'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
 
       {/* Mobile Cards */}
       <div className="md:hidden space-y-4 mt-6 max-h-[600px] overflow-y-auto rounded-xl custom-scrollbar backdrop-blur p-2">

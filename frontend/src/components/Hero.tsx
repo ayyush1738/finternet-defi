@@ -7,6 +7,7 @@ import MagicButton from './MagicButton';
 import { FaLocationArrow } from 'react-icons/fa6';
 import { WavyBackground } from './ui/wavy-background';
 import { useRouter } from 'next/navigation';
+import {Sparkles} from 'lucide-react';
 
 type SignedMessage = {
   signature: Uint8Array;
@@ -163,7 +164,7 @@ export default function Hero() {
   return (
     <div className="relative h-screen overflow-hidden w-full">
       <div className="z-10 absolute inset-0">
-        <WavyBackground backgroundFill="#020009" />
+        {/* <WavyBackground backgroundFill="#020009" /> */}
       </div>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10" />
 
@@ -173,6 +174,7 @@ export default function Hero() {
           <h1 className="text-fuchsia-600 text-5xl font-bold mb-4">inVoice</h1>
         </div> */}
         <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-full px-4 py-2 text-sm font-medium mb-8">
+            <Sparkles className="h-4 w-4 text-purple-500" />
             <span>Built on Solana Devnet</span>
         </div>
 

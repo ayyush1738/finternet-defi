@@ -107,7 +107,7 @@ export default function PendingPayments() {
         <div className="overflow-x-auto rounded-xl shadow-lg bg-gray-800/60 backdrop-blur-lg">
           <div className="max-h-[300px] overflow-y-auto custom-scrollbar rounded-xl">
             <table className="min-w-full table-auto text-left text-sm text-gray-300">
-              <thead className="bg-gray-900 w-full sticky top-0 z-10 text-xs uppercase text-gray-400 tracking-wider">
+              <thead className="bg-gray-900 sticky top-0 z-10 text-xs uppercase text-gray-400 tracking-wider">
                 <tr>
                   <th className="px-6 py-4">Invoice ID</th>
                   <th className="px-6 py-4">Date</th>

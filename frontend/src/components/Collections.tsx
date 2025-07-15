@@ -27,43 +27,50 @@ export default function Collections() {
       <h2 className="text-3xl font-bold mt-80 mb-8 text-white">📦 Top Collections (Mock Data)</h2>
 
       {/* Desktop Table */}
-      <div className="hidden md:block bg-gray-900/60 rounded-xl shadow-lg overflow-hidden backdrop-blur ">
-        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-          <table className="min-w-full text-sm text-left text-gray-200">
+      <div className="hidden md:block bg-gray-900/60 rounded-xl shadow-lg overflow-hidden backdrop-blur">
+        <div className="w-full">
+          <table className="min-w-full text-sm text-left text-gray-200 table-fixed">
             <thead className="bg-gray-800 sticky top-0 z-10 text-xs uppercase text-gray-300 tracking-wider">
               <tr>
-                <th className="px-6 py-4">Invoice ID</th>
-                <th className="px-6 py-4">Date Uploaded</th>
-                <th className="px-6 py-4">Owner</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Profit</th>
-                <th className="px-6 py-4">Invoice</th>
+                <th className="px-6 py-4 w-1/6">Invoice ID</th>
+                <th className="px-6 py-4 w-1/6">Date Uploaded</th>
+                <th className="px-6 py-4 w-1/6">Owner</th>
+                <th className="px-6 py-4 w-1/6">Amount</th>
+                <th className="px-6 py-4 w-1/6">Profit</th>
+                <th className="px-6 py-4 w-1/6">Invoice</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
-              {purchases.map((p, i) => (
-                <tr key={i} className="hover:bg-gray-800 transition duration-200 ease-in-out">
-                  <td className="px-6 py-4 font-medium">{p.id}</td>
-                  <td className="px-6 py-4">{p.date}</td>
-                  <td className="px-6 py-4">{p.owner}</td>
-                  <td className="px-6 py-4">{p.amount}</td>
-                  <td className="px-6 py-4">2.5</td>
-                  <td className="px-6 py-4">
-                    <a
-                      href={p.invoiceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-md shadow-sm"
-                    >
-                      View PDF
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
           </table>
+
+          {/* Scrollable tbody in sync with header */}
+          <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+            <table className="min-w-full text-sm text-left text-gray-200 table-fixed">
+              <tbody className="divide-y divide-gray-700">
+                {purchases.map((p, i) => (
+                  <tr key={i} className="hover:bg-gray-800 transition duration-200 ease-in-out">
+                    <td className="px-6 py-4 w-1/6 font-medium">{p.id}</td>
+                    <td className="px-6 py-4 w-1/6">{p.date}</td>
+                    <td className="px-6 py-4 w-1/6">{p.owner}</td>
+                    <td className="px-6 py-4 w-1/6">{p.amount}</td>
+                    <td className="px-6 py-4 w-1/6">2.5</td>
+                    <td className="px-6 py-4 w-1/6">
+                      <a
+                        href={p.invoiceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-md shadow-sm"
+                      >
+                        View PDF
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
 
       {/* Mobile Cards - Scrollable */}
       <div className="md:hidden space-y-4 mt-6 max-h-[600px] overflow-y-auto rounded-xl custom-scrollbar backdrop-blur p-2">
