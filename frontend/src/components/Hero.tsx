@@ -5,7 +5,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { TextGenerateEffect } from './ui/TextGenerateEffect';
 import MagicButton from './MagicButton';
 import { FaLocationArrow } from 'react-icons/fa6';
-import { WavyBackground } from './ui/wavy-background';
+import { GridBackgroundDemo } from './ui/wavy-background';
 import { useRouter } from 'next/navigation';
 import {Sparkles} from 'lucide-react';
 
@@ -162,11 +162,11 @@ export default function Hero() {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden w-full">
-      <div className="z-10 absolute inset-0">
-        <WavyBackground backgroundFill="#020009" />
+    <div className="relative h-screen overflow-hidden w-full ">
+      <div className=" absolute inset-0">
+        <GridBackgroundDemo />
       </div>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-md z-10" />
+      <div className="absolute inset-0" />
 
       <div className="relative z-20 flex flex-col items-center justify-center h-full w-full text-center px-4">
         {/* <div className="flex">
